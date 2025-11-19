@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Kyber-512 Full Visualization</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tween.js/18.6.4/tween.umd.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { margin: 0; overflow: hidden; background-color: #020617; font-family: 'Inter', sans-serif; color: #e2e8f0; }
+        
+        #ui-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; }
+        
+        .panel { 
+            pointer-events: auto; 
+            background: rgba(15, 23, 42, 0.75); 
+            border: 1px solid rgba(51, 65, 85, 0.6); 
+            border-radius: 12px; 
+            color: #f1f5f9; 
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(16px);
+        }
+        
+        .btn { 
+            background: rgba(30, 41, 59, 0.9); 
+            color: #e2e8f0; 
+            border: 1px solid #475569;
+            padding: 10px 16px; 
+            border-radius: 8px; 
+            cursor: pointer; 
+            font-weight: 600; 
+            font-size: 0.85rem;
+            transition: all 0.2s ease-out; 
+            white-space: nowrap;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+        }
+        .btn:hover:not(:disabled) { 
+            background: #334155; 
+            border-color: #94a3b8;
+            transform: translateY(-1px);
+            box-shadow: 0 0 12px rgba(56, 189, 248, 0.2);
+        }
+        .btn:active { transform: translateY(0); }
+        .btn:disabled { 
+            background: #0f172a; 
+            color: #475569; 
+            border-color: #1e293b;
+            cursor: not-allowed; 
+            box-shadow: none;
+        }
+
+        .btn-primary { 
+            background: #0891b2;
+            color: white; 
+            border: 1px solid #06b6d4;
+        }
+        .btn-primary:hover:not(:disabled) { 
+            background: #06b6d4; 
+            border-color: #22d3ee;
+            box-shadow: 0 0 20px rgba(34, 211, 238, 0.4);
+        }
+        
+        #status-log::-webkit-scrollbar { width: 4px; }
+        #status-log::-webkit-scrollbar-track { background: rgba(0,0,0,0.3); }
+        #status-log::-webkit-scrollbar-thumb { background: #475569; border-radius: 2px; }
+        .text-glow { text-shadow: 0 0 12px rgba(255,255,255,0.15); }
+    </style>
+</head>
+<body>
+
+    <div id="canvas-container" class="w-full h-screen"></div>
+
+    <div id="ui-layer" class="w-full h-full relative flex flex-col justify-between p-4 md:p-8 pointer-events-none">
+        
+        <!-- Header -->
+        <div class="flex flex-col md:flex-row justify-between items-start gap-4 w-full">
+            <header class="panel p-5 w-full md:max-w-md pointer-events-auto z-10 order-2 md:order-1">
+                <div class="flex items-baseline justify-between md:justify-start gap-3 mb-2">
+                    <h1 class="text-xl font-bold text-white tracking-tight text-glow">Kyber-512</h1>
+                    <span class="text-[10px] text-cyan-300 font-mono uppercase bg-cyan-950/60 px-2 py-0.5 rounded border border-cyan-900/50">NIST Level 1</span>
+                </div>
+                <div class="grid grid-cols-3 gap-2 text-[10px] font-mono text-slate-400 border-t border-slate-700/50 pt-2 mt-2">
+                    <div>
+                        <span class="text-slate-500 block">Polinomio (N)</span>
+                        <span class="text-cyan-400 font-bold">256</span>
+                    </div>
+                    <div>
+                        <span class="text-slate-500 block">Módulo (Q)</span>
+                        <span class="text-purple-400 font-bold">3329</span>
+                    </div>
+                    <div>
+                        <span class="text-slate-500 block">Dimensión (K)</span>
+                        <span class="text-emerald-400 font-bold">2x2</span>
+                    </div>
+                </div>
+            </header>
+
+            <div id="status-log" class="panel p-3 w-full md:w-96 h-32 md:h-56 overflow-y-auto pointer-events-auto z-10 order-1 md:order-2 text-xs font-mono bg-slate-950/80 shadow-xl border-l-4 border-l-cyan-600">
+                <div class="text-slate-500 italic border-b border-slate-800 pb-1 mb-1">Kernel matemático inicializado.</div>
+            </div>
+        </div>
+
+        <!-- Controls -->
+        <div class="pointer-events-auto z-10 w-full flex justify-center mb-4 md:mb-0">
+            <div class="panel p-3 md:p-5 flex flex-wrap md:flex-nowrap items-center justify-center gap-4 md:gap-8 shadow-2xl max-w-full border-t border-slate-700/50 bg-slate-900/90">
+                
+                <div id="step-1" class="text-center flex-1 md:flex-none min-w-[120px]">
+                    <span class="block text-[9px] md:text-[10px] text-slate-400 uppercase tracking-widest mb-1 font-bold">Setup</span>
+                    <button id="btn-keygen" class="btn btn-primary w-full text-xs md:text-sm shadow-lg hover:scale-105 transform transition-transform">
+                        Generar Llaves
+                    </button>
+                </div>
+                
+                <div class="hidden md:block h-10 w-px bg-slate-700"></div>
+
+                <div id="step-2" class="opacity-40 pointer-events-none transition-opacity text-center flex-1 md:flex-none min-w-[140px]">
+                    <span class="block text-[9px] md:text-[10px] text-slate-400 uppercase tracking-widest mb-1 font-bold">Encriptar (Bit)</span>
+                    <div class="flex gap-2 justify-center">
+                        <button onclick="window.startEncrypt(0)" class="btn text-xs md:text-sm px-5 hover:text-cyan-300 border-slate-600">0</button>
+                        <button onclick="window.startEncrypt(1)" class="btn text-xs md:text-sm px-5 hover:text-cyan-300 border-slate-600">1</button>
+                    </div>
+                </div>
+
+                <div class="hidden md:block h-10 w-px bg-slate-700"></div>
+
+                <div id="step-3" class="opacity-40 pointer-events-none transition-opacity text-center flex-1 md:flex-none min-w-[120px]">
+                    <span class="block text-[9px] md:text-[10px] text-slate-400 uppercase tracking-widest mb-1 font-bold">Recuperación</span>
+                    <button id="btn-decrypt" class="btn text-fuchsia-300 border-fuchsia-900/50 hover:bg-fuchsia-900/20 w-full text-xs md:text-sm font-bold shadow-[0_0_15px_rgba(217,70,239,0.15)]">
+                        Descifrar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        (function() {
+            // --- REAL KYBER-512 CONSTANTS ---
+            const N = 256; 
+            const Q = 3329;
+            const K = 2;
+            const ETA = 2; 
+
+            // --- MATH KERNEL ---
+            const randInt = (max) => Math.floor(Math.random() * max);
+            
+            const cbd = () => {
+                let a = 0, b = 0;
+                for(let i=0; i<ETA; i++) {
+                    a += randInt(2); 
+                    b += randInt(2);
+                }
+                return a - b;
+            };
+
+            const mod = (n, m) => ((n % m) + m) % m;
+
+            class Poly {
+                constructor(coeffs = []) {
+                    this.coeffs = new Array(N).fill(0).map((_, i) => coeffs[i] || 0);
+                }
+
+                toString() { 
+                    return `[${this.coeffs.slice(0,3).join(',')},..,${this.coeffs[N-1]}]`; 
+                }
+
+                add(o) { return new Poly(this.coeffs.map((c, i) => mod(c + o.coeffs[i], Q))); }
+                sub(o) { return new Poly(this.coeffs.map((c, i) => mod(c - o.coeffs[i], Q))); }
+                
+                mul(o) {
+                    let res = new Array(2 * N).fill(0);
+                    for (let i = 0; i < N; i++) {
+                        if (this.coeffs[i] === 0) continue;
+                        for (let j = 0; j < N; j++) {
+                            res[i + j] += this.coeffs[i] * o.coeffs[j];
+                        }
+                    }
+                    for (let i = 2 * N - 2; i >= N; i--) { 
+                        res[i - N] -= res[i]; 
+                    }
+                    return new Poly(res.slice(0, N).map(c => mod(c, Q)));
+                }
+
+                static random() { return new Poly(Array(N).fill(0).map(() => randInt(Q))); }
+                static noise() { return new Poly(Array(N).fill(0).map(() => mod(cbd(), Q))); }
+            }
+
+            let state = { A: [], s: [], e: [], t: [], r: [], e1: [], e2: null, u: [], v: null, msgBit: 0 };
+
+            // --- THREE.JS SCENE ---
+            const scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x020617);
+            scene.fog = new THREE.FogExp2(0x020617, 0.015);
+
+            const camera = new THREE.PerspectiveCamera(40, window.innerWidth / window.innerHeight, 0.1, 1000);
+            
+            const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.shadowMap.enabled = true;
+            renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+            renderer.toneMapping = THREE.ACESFilmicToneMapping;
+            renderer.toneMappingExposure = 1.2;
+            
+            document.getElementById('canvas-container').appendChild(renderer.domElement);
+
+            const controls = new THREE.OrbitControls(camera, renderer.domElement);
+            controls.enableDamping = true;
+            controls.dampingFactor = 0.05;
+            controls.maxPolarAngle = Math.PI / 2 - 0.1;
+
+            // --- LIGHTING ---
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.4);
+            scene.add(ambientLight);
+
+            const dirLight = new THREE.DirectionalLight(0x22d3ee, 1.0); 
+            dirLight.position.set(15, 30, 15);
+            dirLight.castShadow = true;
+            dirLight.shadow.mapSize.width = 2048;
+            dirLight.shadow.mapSize.height = 2048;
+            scene.add(dirLight);
+
+            const fillLight = new THREE.DirectionalLight(0xd946ef, 0.4); 
+            fillLight.position.set(-15, 10, -15);
+            scene.add(fillLight);
+
+            // --- GRID ---
+            const gridHelper = new THREE.GridHelper(100, 50, 0x1e293b, 0x0f172a);
+            scene.add(gridHelper);
+            
+            const planeGeometry = new THREE.PlaneGeometry(300, 300);
+            const planeMaterial = new THREE.ShadowMaterial({ opacity: 0.4 }); 
+            const plane = new THREE.Mesh(planeGeometry, planeMaterial);
+            plane.rotation.x = -Math.PI / 2;
+            plane.position.y = -0.01;
+            plane.receiveShadow = true;
+            scene.add(plane);
+
+            function updateCamera() {
+                const aspect = window.innerWidth / window.innerHeight;
+                camera.aspect = aspect;
+                camera.updateProjectionMatrix();
+                renderer.setSize(window.innerWidth, window.innerHeight);
+                
+                const baseZ = 55; 
+                if (aspect < 1.0) {
+                    camera.position.set(0, 40 + (1/aspect)*15, baseZ / (aspect * 0.7)); 
+                } else {
+                    camera.position.set(0, 30, baseZ);
+                }
+            }
+            updateCamera();
+            window.addEventListener('resize', updateCamera);
+
+            // --- GLOBAL SCENE GROUPS & STATE ---
+            let groupA = new THREE.Group(); 
+            let groupS = new THREE.Group(); 
+            let groupT = new THREE.Group(); 
+            let groupU = new THREE.Group(); 
+            let groupV = null;              
+            let lastMsgGroup = null;
+            let lastResGroup = null;
+            let operationId = 0; // Concurrency control
+
+            scene.add(groupA); scene.add(groupS); scene.add(groupT); scene.add(groupU);
+
+            // --- VISUALS ---
+            function createLabel(text, pos, subtext = "") {
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+                canvas.width = 512; canvas.height = 128; 
+                ctx.fillStyle = "rgba(0,0,0,0)"; ctx.fillRect(0,0,512,128);
+                
+                // Main Text
+                ctx.font = "bold 42px Inter, sans-serif"; 
+                ctx.fillStyle = "#f8fafc"; 
+                ctx.textAlign = "center"; ctx.textBaseline = "middle";
+                ctx.shadowColor = "#ffffff"; ctx.shadowBlur = 4;
+                ctx.fillText(text, 256, 48);
+
+                // Subtext
+                if (subtext) {
+                    ctx.font = "24px JetBrains Mono, monospace";
+                    ctx.fillStyle = "#94a3b8";
+                    ctx.shadowBlur = 0;
+                    ctx.fillText(subtext, 256, 96);
+                }
+
+                const texture = new THREE.CanvasTexture(canvas);
+                texture.minFilter = THREE.LinearFilter;
+                const mat = new THREE.SpriteMaterial({ map: texture, transparent: true });
+                const sprite = new THREE.Sprite(mat);
+                sprite.position.copy(pos);
+                sprite.position.y += 1.3; 
+                sprite.scale.set(6, 1.5, 1);
+                return sprite;
+            }
+
+            const BASE_Y = 1.2;
+
+            // Lattice Structure Visual
+            function createPolyBlock(poly, colorHex, x, z, labelText = "") {
+                const group = new THREE.Group();
+                
+                const size = 1.8; 
+                const segments = 3; 
+                const step = size / segments;
+                const offset = size / 2;
+
+                group.position.set(x, BASE_Y + offset - 0.5, z);
+
+                // 1. NODES
+                const sphereGeo = new THREE.SphereGeometry(0.05, 6, 6); 
+                const sphereMat = new THREE.MeshBasicMaterial({ color: colorHex });
+                const numPoints = (segments + 1) ** 3;
+                const instancedSpheres = new THREE.InstancedMesh(sphereGeo, sphereMat, numPoints);
+                
+                let idx = 0;
+                const dummy = new THREE.Object3D();
+                for (let i = 0; i <= segments; i++) {
+                    for (let j = 0; j <= segments; j++) {
+                        for (let k = 0; k <= segments; k++) {
+                            dummy.position.set(i * step - offset, j * step - offset, k * step - offset);
+                            dummy.updateMatrix();
+                            instancedSpheres.setMatrixAt(idx++, dummy.matrix);
+                        }
+                    }
+                }
+                group.add(instancedSpheres);
+
+                // 2. EDGES (Wireframe approximation)
+                const boxGeo = new THREE.BoxGeometry(size, size, size, segments, segments, segments);
+                const wireframe = new THREE.WireframeGeometry(boxGeo);
+                const lineMat = new THREE.LineBasicMaterial({ color: colorHex, transparent: true, opacity: 0.15 });
+                const lines = new THREE.LineSegments(wireframe, lineMat);
+                group.add(lines);
+
+                // 3. Inner Glow Core
+                const coreGeo = new THREE.BoxGeometry(size*0.4, size*0.4, size*0.4);
+                const coreMat = new THREE.MeshBasicMaterial({ color: colorHex, transparent: true, opacity: 0.3 });
+                const core = new THREE.Mesh(coreGeo, coreMat);
+                core.userData = { pulse: true }; 
+                group.add(core);
+
+                // 4. Label
+                const sprite = createLabel(labelText, new THREE.Vector3(0, offset + 1.0, 0), poly.toString());
+                group.add(sprite);
+
+                // Animation
+                group.scale.set(0,0,0);
+                new TWEEN.Tween(group.scale).to({ x: 1, y: 1, z: 1 }, 1000).easing(TWEEN.Easing.Elastic.Out).start();
+
+                return group; 
+            }
+
+            function log(msg, type = 'info') {
+                const logDiv = document.getElementById('status-log');
+                const p = document.createElement('div');
+                let clr = 'text-slate-400';
+                let borderClr = 'border-slate-800';
+                
+                if(type === 'success') { clr = 'text-emerald-400'; borderClr = 'border-emerald-600'; }
+                if(type === 'error')   { clr = 'text-red-400'; borderClr = 'border-red-600'; }
+                if(type === 'action')  { clr = 'text-cyan-300'; borderClr = 'border-cyan-600'; }
+
+                const time = new Date().toLocaleTimeString([], {hour12: false, hour: '2-digit', minute:'2-digit', second:'2-digit'});
+                p.innerHTML = `<span class="text-slate-600 text-[10px] mr-2 font-sans hidden sm:inline">${time}</span> ${msg}`;
+                p.className = `pl-2 border-l-2 ${borderClr} ${clr} py-1 transition-all hover:bg-slate-800/50 mb-1`;
+                logDiv.appendChild(p);
+                logDiv.scrollTop = logDiv.scrollHeight;
+            }
+
+            // --- POSITIONS & COLORS ---
+            const ZONE_ALICE_X = -12;
+            const ZONE_BOB_X = 12;
+            const ROW_0_Z = -3;
+            const ROW_1_Z = 1; 
+
+            const COLOR_MATRIX = 0x06b6d4; 
+            const COLOR_SECRET = 0xd946ef; 
+            const COLOR_PUBLIC = 0x8b5cf6; 
+            const COLOR_BOB_OP = 0x10b981; 
+            const COLOR_MSG    = 0xfacc15; 
+
+            // --- LOGIC FUNCTIONS ---
+
+            function cleanupRound() {
+                // Stop moving items
+                TWEEN.removeAll(); // Caution: this removes all tweens, simpler than tracking individual ones for now
+                
+                // Reset positions
+                groupU.position.set(0,0,0);
+                groupS.position.set(0,0,0);
+                
+                groupU.clear();
+                if (groupV) { scene.remove(groupV); groupV = null; }
+                if (lastMsgGroup) { scene.remove(lastMsgGroup); lastMsgGroup = null; }
+                if (lastResGroup) { scene.remove(lastResGroup); lastResGroup = null; }
+            }
+
+            // 1. KEY GEN
+            document.getElementById('btn-keygen').addEventListener('click', () => {
+                operationId++; 
+                const currentOp = operationId;
+                cleanupRound();
+                
+                groupA.clear();
+                groupS.clear();
+                groupT.clear();
+                
+                document.getElementById('btn-keygen').disabled = true;
+                document.getElementById('step-1').classList.add('opacity-50');
+                log(`Iniciando KeyGen Kyber-512 (N=${N}, Q=${Q})`, 'action');
+
+                state.A = Array(K).fill(0).map(() => Array(K).fill(0).map(Poly.random));
+                state.s = Array(K).fill(0).map(Poly.noise);
+                state.e = Array(K).fill(0).map(Poly.noise);
+                
+                let As = state.A.map(row => {
+                    let sum = new Poly();
+                    row.forEach((p, i) => sum = sum.add(p.mul(state.s[i])));
+                    return sum;
+                });
+                state.t = As.map((p, i) => p.add(state.e[i]));
+
+                for(let i=0; i<K; i++) {
+                    for(let j=0; j<K; j++) {
+                        let z = (i === 0) ? ROW_0_Z : ROW_1_Z;
+                        let x = ZONE_ALICE_X + (j * 3.0);
+                        let group = createPolyBlock(state.A[i][j], COLOR_MATRIX, x, z, `A[${i},${j}]`);
+                        groupA.add(group);
+                    }
+                }
+
+                setTimeout(() => {
+                    if(operationId !== currentOp) return;
+                    log("Generando secreto s (ruido CBD eta=2)");
+                    let s_x = ZONE_ALICE_X + 7; 
+                    for(let i=0; i<K; i++) {
+                        let z = (i === 0) ? ROW_0_Z : ROW_1_Z;
+                        let group = createPolyBlock(state.s[i], COLOR_SECRET, s_x, z, `s[${i}]`);
+                        groupS.add(group);
+                    }
+                }, 1200);
+
+                setTimeout(() => {
+                    if(operationId !== currentOp) return;
+                    log("Calculando llave pública t = As + e...", 'action');
+                    let t_x = ZONE_ALICE_X + 12;
+                    for(let i=0; i<K; i++) {
+                        let z = (i === 0) ? ROW_0_Z : ROW_1_Z;
+                        let group = createPolyBlock(state.t[i], COLOR_PUBLIC, t_x, z, `t[${i}]`);
+                        groupT.add(group);
+                    }
+                }, 3000);
+
+                setTimeout(() => {
+                    if(operationId !== currentOp) return;
+                    log("Setup completo. Llaves listas.", 'success');
+                    document.getElementById('step-2').classList.remove('opacity-40', 'pointer-events-none');
+                }, 4500);
+            });
+
+            // 2. ENCRYPT
+            window.startEncrypt = (bit) => {
+                operationId++;
+                const currentOp = operationId;
+                cleanupRound();
+
+                log(`Encriptando bit m = ${bit}`, 'action');
+                state.msgBit = bit;
+                
+                state.r = Array(K).fill(0).map(Poly.noise);
+                state.e1 = Array(K).fill(0).map(Poly.noise);
+                state.e2 = Poly.noise();
+                
+                const encodedVal = bit === 1 ? Math.floor(Q/2) : 0;
+                const msgPoly = new Poly([encodedVal, ...new Array(N-1).fill(0)]);
+
+                let u_vec = Array(K).fill(0).map(() => new Poly());
+                for(let i=0; i<K; i++) {
+                    for(let j=0; j<K; j++) u_vec[j] = u_vec[j].add(state.A[i][j].mul(state.r[i]));
+                }
+                state.u = u_vec.map((p, i) => p.add(state.e1[i]));
+
+                let t_dot_r = new Poly();
+                state.t.forEach((p, i) => t_dot_r = t_dot_r.add(p.mul(state.r[i])));
+                state.v = t_dot_r.add(state.e2).add(msgPoly);
+
+                lastMsgGroup = createPolyBlock(msgPoly, COLOR_MSG, ZONE_BOB_X, 3, `m:${bit}`);
+                scene.add(lastMsgGroup); 
+                
+                setTimeout(() => {
+                    if(operationId !== currentOp) return;
+                    log("Calculando u = A^T r + e1");
+                    groupU.clear(); 
+                    let u_x = ZONE_BOB_X - 4;
+                    for(let i=0; i<K; i++) {
+                        let z = (i === 0) ? ROW_0_Z : ROW_1_Z;
+                        let group = createPolyBlock(state.u[i], COLOR_BOB_OP, u_x, z, `u[${i}]`);
+                        groupU.add(group);
+                    }
+                }, 1200);
+
+                setTimeout(() => {
+                    if(operationId !== currentOp) return;
+                    log("Calculando v = t^T r + e2 + m");
+                    if(lastMsgGroup) scene.remove(lastMsgGroup); 
+                    groupV = createPolyBlock(state.v, COLOR_BOB_OP, ZONE_BOB_X + 2, 0, `v`); 
+                    scene.add(groupV); 
+                }, 2500);
+
+                setTimeout(() => {
+                    if(operationId !== currentOp) return;
+                    log("Transmitiendo Ciphertext (u, v)...", 'action');
+                    const targetX = ZONE_ALICE_X + 17;
+                    new TWEEN.Tween(groupU.position).to({ x: targetX - groupU.position.x - 5 }, 2000).easing(TWEEN.Easing.Cubic.InOut).start();
+                    if(groupV) new TWEEN.Tween(groupV.position).to({ x: targetX, z: 0 }, 2000).easing(TWEEN.Easing.Cubic.InOut).start();
+                }, 4000);
+
+                setTimeout(() => {
+                    if(operationId !== currentOp) return;
+                    document.getElementById('step-3').classList.remove('opacity-40', 'pointer-events-none');
+                    log("Ciphertext recibido.", 'success');
+                }, 6000);
+            };
+
+            // 3. DECRYPT
+            document.getElementById('btn-decrypt').addEventListener('click', () => {
+                operationId++;
+                const currentOp = operationId;
+                // Clean up potential old results but KEEP the ciphertext and key positions!
+                if (lastResGroup) { scene.remove(lastResGroup); lastResGroup = null; }
+
+                log("Desencriptando...", 'action');
+                
+                let s_dot_u = new Poly();
+                state.s.forEach((p, i) => s_dot_u = s_dot_u.add(p.mul(state.u[i])));
+                const noisyM = state.v.sub(s_dot_u);
+                
+                const coeff = noisyM.coeffs[0];
+                const lowerBound = Math.floor(Q/4);
+                const upperBound = Math.floor(3*Q/4);
+                const decryptedBit = (coeff > lowerBound && coeff < upperBound) ? 1 : 0;
+
+                new TWEEN.Tween(groupS.position).to({ x: 7 }, 1000).start(); 
+                
+                setTimeout(() => {
+                    if(operationId !== currentOp) return;
+                    log(`Coeficiente principal: ${coeff}`);
+                    lastResGroup = createPolyBlock(noisyM, decryptedBit === 1 ? COLOR_MSG : 0x94a3b8, ZONE_ALICE_X + 7, 3, `m':${decryptedBit}`);
+                    scene.add(lastResGroup);
+                    
+                    lastResGroup.scale.set(0.5,0.5,0.5);
+                    new TWEEN.Tween(lastResGroup.scale).to({x:1.2, y:1.2, z:1.2}, 1000).easing(TWEEN.Easing.Elastic.Out).start();
+                    
+                    const success = decryptedBit === state.msgBit;
+                    if(success) log(`¡Éxito! Bit ${decryptedBit} recuperado.`, 'success');
+                    else log(`Error. Coeficiente ${coeff} ambiguo.`, 'error');
+                }, 1800);
+            });
+
+            function animate(time) {
+                if (!document.getElementById('canvas-container').querySelector('canvas')) return;
+                requestAnimationFrame(animate);
+                TWEEN.update(time);
+                controls.update();
+                renderer.render(scene, camera);
+                
+                const scale = 1 + Math.sin(time * 0.002) * 0.1;
+                scene.traverse((object) => {
+                    if (object.userData && object.userData.pulse) {
+                        object.scale.set(scale, scale, scale);
+                    }
+                });
+            }
+            animate();
+
+        })();
+    </script>
+</body>
+</html>

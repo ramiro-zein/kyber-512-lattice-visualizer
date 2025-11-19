@@ -1,1 +1,11 @@
 /* You can add global styles to this file, and also import other style files */
+@use "tailwindcss";
+
+/* Mover estos estilos aquí para que apliquen a toda la página */
+body {
+  margin: 0;
+  overflow: hidden;
+  background-color: #020617; /* Fondo oscuro esencial para ver los elementos claros */
+  font-family: 'Inter', sans-serif;
+  color: #e2e8f0;
+}
