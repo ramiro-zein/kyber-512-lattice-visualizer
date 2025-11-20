@@ -2,8 +2,7 @@ import { Component, ElementRef, ViewChild, afterNextRender, Injector } from '@an
 import { RouterOutlet } from '@angular/router';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
-// Importaciones nombradas para compatibilidad con TweenJS v25+
-import { Tween, Easing, update as updateTween } from '@tweenjs/tween.js';
+import * as TWEEN from '@tweenjs/tween.js';
 
 // --- CONSTANTES KYBER-512 ---
 const N = 256;
@@ -39,7 +38,7 @@ class Poly {
   add(o: Poly) {
     return new Poly(this.coeffs.map((c, i) => mod(c + o.coeffs[i], Q)));
   }
-  
+
   sub(o: Poly) {
     return new Poly(this.coeffs.map((c, i) => mod(c - o.coeffs[i], Q)));
   }
@@ -61,7 +60,7 @@ class Poly {
   static random() {
     return new Poly(Array(N).fill(0).map(() => randInt(Q)));
   }
-  
+
   static noise() {
     return new Poly(Array(N).fill(0).map(() => mod(cbd(), Q)));
   }
@@ -104,7 +103,7 @@ export class App {
   groupV: THREE.Group | null = null;
   lastMsgGroup: THREE.Group | null = null;
   lastResGroup: THREE.Group | null = null;
-  
+
   operationId = 0;
 
   // Configuración Visual
@@ -134,7 +133,6 @@ export class App {
     this.scene.fog = new THREE.FogExp2(0x020617, 0.015);
 
     this.camera = new THREE.PerspectiveCamera(40, window.innerWidth / window.innerHeight, 0.1, 1000);
-    this.camera.position.set(0, 30, 55); 
 
     this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
     this.renderer.setSize(window.innerWidth, window.innerHeight);
@@ -195,6 +193,14 @@ export class App {
     this.camera.aspect = aspect;
     this.camera.updateProjectionMatrix();
     this.renderer.setSize(window.innerWidth, window.innerHeight);
+
+    // Posicionamiento responsive mejorado
+    const baseZ = 55;
+    if (aspect < 1.0) {
+      this.camera.position.set(0, 40 + (1/aspect)*15, baseZ / (aspect * 0.7));
+    } else {
+      this.camera.position.set(0, 30, baseZ);
+    }
   }
 
   createLabel(text: string, pos: THREE.Vector3, subtext = '') {
@@ -241,7 +247,7 @@ export class App {
 
     group.position.set(x, this.BASE_Y + offset - 0.5, z);
 
-    // --- CORRECCIÓN: InstancedMesh ---
+    // NODOS (InstancedMesh)
     const sphereGeo = new THREE.SphereGeometry(0.05, 6, 6);
     const sphereMat = new THREE.MeshBasicMaterial({ color: colorHex });
     const numPoints = (segments + 1) ** 3;
@@ -258,30 +264,35 @@ export class App {
         }
       }
     }
-    // IMPORTANTE: Marcar matriz como actualizada
     instancedSpheres.instanceMatrix.needsUpdate = true;
     group.add(instancedSpheres);
 
-    // Wireframe
+    // WIREFRAME
     const boxGeo = new THREE.BoxGeometry(size, size, size, segments, segments, segments);
     const wireframe = new THREE.WireframeGeometry(boxGeo);
     const lineMat = new THREE.LineBasicMaterial({ color: colorHex, transparent: true, opacity: 0.15 });
     const lines = new THREE.LineSegments(wireframe, lineMat);
     group.add(lines);
 
-    // Núcleo
+    // NÚCLEO CON PULSACIÓN
     const coreGeo = new THREE.BoxGeometry(size * 0.4, size * 0.4, size * 0.4);
     const coreMat = new THREE.MeshBasicMaterial({ color: colorHex, transparent: true, opacity: 0.3 });
     const core = new THREE.Mesh(coreGeo, coreMat);
     core.userData = { pulse: true };
     group.add(core);
 
-    // Label
+    // ETIQUETA
     const sprite = this.createLabel(labelText, new THREE.Vector3(0, offset + 1.0, 0), poly.toString());
     group.add(sprite);
 
-    // --- CORRECCIÓN: Sin animación de escala inicial para asegurar visibilidad ---
-    group.scale.set(1, 1, 1);
+    // ANIMACIÓN DE APARICIÓN ELÁSTICA
+    group.scale.set(0, 0, 0);
+    new TWEEN.Tween(group.scale)
+      .to({ x: 1, y: 1, z: 1 }, 1000)
+      .easing(TWEEN.Easing.Elastic.Out)
+      .start();
+
+    console.log(`Created poly block at (${x}, ${this.BASE_Y + offset - 0.5}, ${z}) with label: ${labelText}`);
 
     return group;
   }
@@ -305,11 +316,16 @@ export class App {
   }
 
   cleanupRound() {
-    // Detener todos los tweens activos para evitar conflictos de movimiento
-    // No borramos A, S, T porque son las llaves
-    this.groupU.clear();
+    // Detener todos los tweens activos para evitar conflictos
+    TWEEN.removeAll();
+
+    // Resetear posiciones
     this.groupU.position.set(0, 0, 0);
-    
+    this.groupS.position.set(0, 0, 0);
+
+    // Limpiar grupos temporales
+    this.groupU.clear();
+
     if (this.groupV) {
       this.scene.remove(this.groupV);
       this.groupV = null;
@@ -327,14 +343,15 @@ export class App {
   runKeyGen() {
     this.operationId++;
     const currentOp = this.operationId;
-    
+
     this.cleanupRound();
     this.groupA.clear();
     this.groupS.clear();
     this.groupT.clear();
-    
-    // Reset posición por seguridad
-    this.groupS.position.set(0,0,0);
+
+    const btnKeyGen = document.getElementById('btn-keygen') as HTMLButtonElement;
+    if (btnKeyGen) btnKeyGen.disabled = true;
+    document.getElementById('step-1')?.classList.add('opacity-50');
 
     this.log(`Iniciando KeyGen Kyber-512 (N=${N}, Q=${Q})`, 'action');
 
@@ -349,6 +366,7 @@ export class App {
     });
     this.state.t = As.map((p: Poly, i: number) => p.add(this.state.e[i]));
 
+    // Generar matriz A
     for (let i = 0; i < K; i++) {
       for (let j = 0; j < K; j++) {
         let z = i === 0 ? this.ROW_0_Z : this.ROW_1_Z;
@@ -367,7 +385,7 @@ export class App {
         let group = this.createPolyBlock(this.state.s[i], this.COLOR_SECRET, s_x, z, `s[${i}]`);
         this.groupS.add(group);
       }
-    }, 500);
+    }, 1200);
 
     setTimeout(() => {
       if (this.operationId !== currentOp) return;
@@ -378,13 +396,13 @@ export class App {
         let group = this.createPolyBlock(this.state.t[i], this.COLOR_PUBLIC, t_x, z, `t[${i}]`);
         this.groupT.add(group);
       }
-    }, 1000);
+    }, 3000);
 
     setTimeout(() => {
       if (this.operationId !== currentOp) return;
       this.log('Setup completo. Llaves listas.', 'success');
       document.getElementById('step-2')?.classList.remove('opacity-40', 'pointer-events-none');
-    }, 1500);
+    }, 4500);
   }
 
   startEncrypt(bit: number) {
@@ -431,7 +449,7 @@ export class App {
         let group = this.createPolyBlock(this.state.u[i], this.COLOR_BOB_OP, u_x, z, `u[${i}]`);
         this.groupU.add(group);
       }
-    }, 1000);
+    }, 1200);
 
     setTimeout(() => {
       if (this.operationId !== currentOp) return;
@@ -439,33 +457,32 @@ export class App {
       if (this.lastMsgGroup) this.scene.remove(this.lastMsgGroup);
       this.groupV = this.createPolyBlock(this.state.v, this.COLOR_BOB_OP, this.ZONE_BOB_X + 2, 0, `v`);
       this.scene.add(this.groupV);
-    }, 2000);
+    }, 2500);
 
     setTimeout(() => {
       if (this.operationId !== currentOp) return;
       this.log('Transmitiendo Ciphertext (u, v)...', 'action');
-      
-      const targetX = this.ZONE_ALICE_X + 17; 
-      
-      // Animación de envío
-      new Tween(this.groupU.position)
+
+      const targetX = this.ZONE_ALICE_X + 17;
+
+      new TWEEN.Tween(this.groupU.position)
         .to({ x: targetX - this.groupU.position.x - 5 }, 2000)
-        .easing(Easing.Cubic.InOut)
+        .easing(TWEEN.Easing.Cubic.InOut)
         .start();
 
       if (this.groupV) {
-        new Tween(this.groupV.position)
+        new TWEEN.Tween(this.groupV.position)
           .to({ x: targetX, z: 0 }, 2000)
-          .easing(Easing.Cubic.InOut)
+          .easing(TWEEN.Easing.Cubic.InOut)
           .start();
       }
-    }, 3500);
+    }, 4000);
 
     setTimeout(() => {
       if (this.operationId !== currentOp) return;
       document.getElementById('step-3')?.classList.remove('opacity-40', 'pointer-events-none');
       this.log('Ciphertext recibido.', 'success');
-    }, 5500);
+    }, 6000);
   }
 
   runDecrypt() {
@@ -475,6 +492,8 @@ export class App {
     }
     this.operationId++;
     const currentOp = this.operationId;
+
+    // Limpiar solo resultado anterior, mantener ciphertext
     if (this.lastResGroup) {
       this.scene.remove(this.lastResGroup);
       this.lastResGroup = null;
@@ -492,7 +511,7 @@ export class App {
     const decryptedBit = coeff > lowerBound && coeff < upperBound ? 1 : 0;
 
     // Mover S para simular operación
-    new Tween(this.groupS.position).to({ x: 7 }, 1000).start();
+    new TWEEN.Tween(this.groupS.position).to({ x: 7 }, 1000).start();
 
     setTimeout(() => {
       if (this.operationId !== currentOp) return;
@@ -506,24 +525,29 @@ export class App {
       );
       this.scene.add(this.lastResGroup);
 
+      this.lastResGroup.scale.set(0.5, 0.5, 0.5);
+      new TWEEN.Tween(this.lastResGroup.scale)
+        .to({ x: 1.2, y: 1.2, z: 1.2 }, 1000)
+        .easing(TWEEN.Easing.Elastic.Out)
+        .start();
+
       const success = decryptedBit === this.state.msgBit;
       if (success) this.log(`¡Éxito! Bit ${decryptedBit} recuperado.`, 'success');
       else this.log(`Error. Coeficiente ${coeff} ambiguo.`, 'error');
-    }, 1500);
+    }, 1800);
   }
 
-  animate() {
+  animate(time?: number) {
     if (!this.renderer) return;
-    
-    requestAnimationFrame(() => this.animate());
-    
-    // IMPORTANTE: Actualizar tweens con tiempo explícito
-    updateTween(performance.now());
-    
+
+    requestAnimationFrame((t) => this.animate(t));
+
+    TWEEN.update(time);
+
     this.controls.update();
     this.renderer.render(this.scene, this.camera);
 
-    const scale = 1 + Math.sin(Date.now() * 0.002) * 0.1;
+    const scale = 1 + Math.sin((time || Date.now()) * 0.002) * 0.1;
     this.scene.traverse((object) => {
       if (object.userData && object.userData['pulse']) {
         object.scale.set(scale, scale, scale);
