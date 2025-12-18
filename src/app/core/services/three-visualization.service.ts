@@ -1,128 +1,278 @@
-/**
- * @fileoverview Three.js Visualization Service for Kyber-512
- * @description Professional 3D rendering service for cryptographic operations
- * @author Doctorate Level Implementation
- */
-
-import { Injectable, ElementRef } from '@angular/core';
+import {Injectable, ElementRef} from '@angular/core';
 import * as THREE from 'three';
-import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
-import * as TWEEN from '@tweenjs/tween.js';
-import { Poly, KYBER_512_PARAMS, PolyVector, PolyMatrix } from '../models/kyber.types';
+import {OrbitControls} from 'three/examples/jsm/controls/OrbitControls.js';
 
 /**
- * Visual configuration constants
+ * Advanced scene configuration for professional 3D visualization
+ * Provides comprehensive control over rendering quality and visual appearance
  */
-const VISUAL_CONFIG = {
-  // Scene positioning
-  ZONE_ALICE_X: -12,
-  ZONE_BOB_X: 12,
-  ROW_0_Z: -3,
-  ROW_1_Z: 1,
-  BASE_Y: 1.2,
-
-  // Colors (semantic color scheme)
-  COLOR_MATRIX: 0x06b6d4, // Cyan - Public matrix A
-  COLOR_SECRET: 0xd946ef, // Magenta - Secret key s
-  COLOR_PUBLIC: 0x8b5cf6, // Purple - Public key t
-  COLOR_BOB_OP: 0x10b981, // Green - Bob's operations (u, v)
-  COLOR_MSG: 0xfacc15, // Yellow - Message
-  COLOR_ERROR: 0xef4444, // Red - Error states
-  COLOR_SUCCESS: 0x22c55e, // Bright green - Success
-
-  // Lattice visualization
-  LATTICE_SIZE: 1.8,
-  LATTICE_SEGMENTS: 3,
-  NODE_SIZE: 0.05,
-  CORE_OPACITY: 0.3,
-  WIREFRAME_OPACITY: 0.15,
-
-  // Camera
-  CAMERA_FOV: 40,
-  CAMERA_BASE_Z: 55,
-
-  // Animation
-  ANIM_DURATION: 1000,
-  ANIM_DELAY_STEP: 1200,
-} as const;
-
-/**
- * Visual element representing a polynomial in 3D space
- */
-export interface PolyVisual {
-  group: THREE.Group;
-  polynomial: Poly;
-  label: string;
-  color: number;
+export interface SceneConfiguration {
+  /** Background color (hex) */
+  backgroundColor?: number;
+  /** Fog density for depth perception (0-1) */
+  fogDensity?: number;
+  /** Enable shadow mapping */
+  enableShadows?: boolean;
+  /** Anti-aliasing quality */
+  antialias?: boolean;
+  /** Tone mapping exposure (brightness) */
+  toneMappingExposure?: number;
 }
 
 /**
- * Scene management service for Three.js visualization
+ * Camera configuration parameters
+ * Controls perspective and viewing frustum
+ */
+export interface CameraConfiguration {
+  /** Field of view in degrees */
+  fov?: number;
+  /** Near clipping plane */
+  near?: number;
+  /** Far clipping plane */
+  far?: number;
+  /** Initial camera position */
+  position?: THREE.Vector3;
+  /** Camera look-at target */
+  target?: THREE.Vector3;
+}
+
+/**
+ * Lighting configuration for the scene
+ * Supports multiple light types and intensities
+ */
+export interface LightingConfiguration {
+  /** Ambient light intensity (0-1) */
+  ambientIntensity?: number;
+  /** Ambient light color (hex) */
+  ambientColor?: number;
+  /** Enable directional lights */
+  enableDirectional?: boolean;
+  /** Main directional light intensity */
+  directionalIntensity?: number;
+  /** Main directional light color */
+  directionalColor?: number;
+}
+
+/**
+ * Control configuration for camera interaction
+ * Defines user interaction with the 3D scene
+ */
+export interface ControlConfiguration {
+  /** Enable smooth damping */
+  enableDamping?: boolean;
+  /** Damping factor for smooth motion (0-1) */
+  dampingFactor?: number;
+  /** Minimum zoom distance */
+  minDistance?: number;
+  /** Maximum zoom distance */
+  maxDistance?: number;
+  /** Maximum polar angle (vertical rotation limit in radians) */
+  maxPolarAngle?: number;
+  /** Enable auto-rotation */
+  autoRotate?: boolean;
+  /** Auto-rotation speed */
+  autoRotateSpeed?: number;
+}
+
+/**
+ * Grid helper configuration
+ */
+export interface GridConfiguration {
+  /** Grid size */
+  size?: number;
+  /** Number of divisions */
+  divisions?: number;
+  /** Primary grid color */
+  colorCenterLine?: number;
+  /** Secondary grid color */
+  colorGrid?: number;
+  /** Enable ground plane for shadows */
+  enableGroundPlane?: boolean;
+}
+
+/**
+ * Default visual configuration constants
+ * Industry-standard values for professional 3D visualization
+ */
+const DEFAULT_CONFIG = {
+  // Scene
+  BACKGROUND_COLOR: 0x020617,
+  FOG_DENSITY: 0.015,
+
+  // Camera
+  CAMERA_FOV: 40,
+  CAMERA_NEAR: 0.1,
+  CAMERA_FAR: 1000,
+  CAMERA_POSITION: new THREE.Vector3(0, 30, 55),
+  CAMERA_TARGET: new THREE.Vector3(0, 0, 0),
+
+  // Lighting
+  AMBIENT_INTENSITY: 0.4,
+  AMBIENT_COLOR: 0xffffff,
+  MAIN_LIGHT_COLOR: 0x22d3ee,
+  MAIN_LIGHT_INTENSITY: 1.0,
+  FILL_LIGHT_COLOR: 0xd946ef,
+  FILL_LIGHT_INTENSITY: 0.4,
+  RIM_LIGHT_COLOR: 0x6366f1,
+  RIM_LIGHT_INTENSITY: 0.3,
+
+  // Grid
+  GRID_SIZE: 100,
+  GRID_DIVISIONS: 50,
+  GRID_COLOR_CENTER: 0x1e293b,
+  GRID_COLOR_GRID: 0x0f172a,
+
+  // Controls
+  DAMPING_FACTOR: 0.05,
+  MIN_DISTANCE: 20,
+  MAX_DISTANCE: 100,
+  MAX_POLAR_ANGLE: Math.PI / 2 - 0.1,
+  AUTO_ROTATE_SPEED: 0.5,
+
+  // Rendering
+  PIXEL_RATIO_LIMIT: 2,
+  TONE_MAPPING_EXPOSURE: 1.2,
+  SHADOW_MAP_SIZE: 2048,
+} as const;
+
+/**
+ * Professional Three.js Scene Management Service
+ *
+ * This service provides a comprehensive foundation for 3D visualization with:
+ * - Advanced rendering pipeline with tone mapping and shadows
+ * - Flexible camera system with smooth controls
+ * - Sophisticated lighting setup (ambient, directional, fill, rim)
+ * - Performance-optimized rendering loop
+ * - Responsive viewport handling
+ * - Proper resource cleanup and memory management
+ *
+ * @example
+ * ```typescript
+ * constructor(private viz: ThreeVisualizationService) {}
+ *
+ * ngAfterViewInit() {
+ *   this.viz.initialize(this.container, {
+ *     backgroundColor: 0x1a1a2e,
+ *     enableShadows: true
+ *   });
+ * }
+ *
+ * ngOnDestroy() {
+ *   this.viz.dispose();
+ * }
+ * ```
  */
 @Injectable({
   providedIn: 'root',
 })
 export class ThreeVisualizationService {
-  // Three.js core objects
+  // ========================================================================
+  // CORE THREE.JS OBJECTS
+  // ========================================================================
+
+  /** Main 3D scene container */
   private scene!: THREE.Scene;
+
+  /** Perspective camera for 3D viewing */
   private camera!: THREE.PerspectiveCamera;
+
+  /** WebGL renderer */
   private renderer!: THREE.WebGLRenderer;
+
+  /** Orbit controls for user interaction */
   private controls!: OrbitControls;
 
-  // Scene groups for different cryptographic components
-  private groupA!: THREE.Group; // Matrix A
-  private groupS!: THREE.Group; // Secret s
-  private groupT!: THREE.Group; // Public key t
-  private groupU!: THREE.Group; // Ciphertext u
-  private groupV: THREE.Group | null = null; // Ciphertext v
-  private groupMessage: THREE.Group | null = null; // Message
-  private groupResult: THREE.Group | null = null; // Decryption result
+  // ========================================================================
+  // STATE MANAGEMENT
+  // ========================================================================
 
-  // State
+  /** Animation frame request ID */
   private animationFrameId: number | null = null;
+
+  /** Initialization state flag */
   private isInitialized = false;
 
-  constructor() {}
+  /** Configuration state */
+  private config: Required<SceneConfiguration> = {
+    backgroundColor: DEFAULT_CONFIG.BACKGROUND_COLOR,
+    fogDensity: DEFAULT_CONFIG.FOG_DENSITY,
+    enableShadows: true,
+    antialias: true,
+    toneMappingExposure: DEFAULT_CONFIG.TONE_MAPPING_EXPOSURE,
+  };
+
+  constructor() {
+  }
+
+  // ========================================================================
+  // PUBLIC API - LIFECYCLE MANAGEMENT
+  // ========================================================================
 
   /**
-   * Initialize Three.js scene with given container
+   * Initialize the Three.js scene with optional configuration
+   *
+   * @param container - DOM element to attach the renderer
+   * @param sceneConfig - Optional scene configuration
+   * @param cameraConfig - Optional camera configuration
+   * @param lightingConfig - Optional lighting configuration
+   * @param controlConfig - Optional control configuration
+   * @param gridConfig - Optional grid configuration
    */
-  public initialize(container: ElementRef<HTMLDivElement>): void {
+  public initialize(
+    container: ElementRef<HTMLDivElement>,
+    sceneConfig?: SceneConfiguration,
+    cameraConfig?: CameraConfiguration,
+    lightingConfig?: LightingConfiguration,
+    controlConfig?: ControlConfiguration,
+    gridConfig?: GridConfiguration
+  ): void {
     if (this.isInitialized) {
-      console.warn('ThreeVisualizationService already initialized');
+      console.warn('[ThreeVisualizationService] Already initialized. Call dispose() first to reinitialize.');
       return;
     }
 
+    // Merge configurations
+    this.config = {...this.config, ...sceneConfig};
+
+    // Initialize core components
     this.initScene();
-    this.initCamera();
+    this.initCamera(cameraConfig);
     this.initRenderer(container);
-    this.initControls();
-    this.initLighting();
-    this.initGrid();
-    this.initGroups();
+    this.initControls(controlConfig);
+    this.initLighting(lightingConfig);
+    this.initGrid(gridConfig);
 
     this.isInitialized = true;
     this.startAnimation();
 
     // Handle window resize
     window.addEventListener('resize', () => this.onWindowResize());
+
+    console.log('[ThreeVisualizationService] Initialized successfully');
   }
 
   /**
    * Dispose and cleanup all Three.js resources
+   * Critical for preventing memory leaks
    */
   public dispose(): void {
     if (!this.isInitialized) return;
 
-    if (this.animationFrameId) {
+    console.log('[ThreeVisualizationService] Disposing resources...');
+
+    // Stop animation loop
+    if (this.animationFrameId !== null) {
       cancelAnimationFrame(this.animationFrameId);
+      this.animationFrameId = null;
     }
 
+    // Dispose controls
     this.controls?.dispose();
-    this.renderer?.dispose();
-    TWEEN.removeAll();
 
-    // Cleanup geometry and materials
+    // Dispose renderer
+    this.renderer?.dispose();
+
+    // Traverse scene and dispose geometries and materials
     this.scene?.traverse((object) => {
       if (object instanceof THREE.Mesh) {
         object.geometry?.dispose();
@@ -134,526 +284,339 @@ export class ThreeVisualizationService {
       }
     });
 
+    // Remove event listeners
+    window.removeEventListener('resize', () => this.onWindowResize());
+
     this.isInitialized = false;
+    console.log('[ThreeVisualizationService] Disposed successfully');
   }
 
   // ========================================================================
-  // INITIALIZATION METHODS
+  // PUBLIC API - SCENE ACCESS
   // ========================================================================
 
+  /**
+   * Get the Three.js scene for adding custom objects
+   * @returns The main scene object
+   */
+  public getScene(): THREE.Scene {
+    return this.scene;
+  }
+
+  /**
+   * Get the camera for custom positioning or animation
+   * @returns The perspective camera
+   */
+  public getCamera(): THREE.PerspectiveCamera {
+    return this.camera;
+  }
+
+  /**
+   * Get the renderer for custom rendering operations
+   * @returns The WebGL renderer
+   */
+  public getRenderer(): THREE.WebGLRenderer {
+    return this.renderer;
+  }
+
+  /**
+   * Get the orbit controls for custom interaction
+   * @returns The orbit controls
+   */
+  public getControls(): OrbitControls {
+    return this.controls;
+  }
+
+  /**
+   * Check if the service is initialized
+   * @returns Initialization state
+   */
+  public isReady(): boolean {
+    return this.isInitialized;
+  }
+
+  // ========================================================================
+  // PUBLIC API - SCENE MANIPULATION
+  // ========================================================================
+
+  /**
+   * Add an object to the scene
+   * @param object - Three.js object to add
+   */
+  public addObject(object: THREE.Object3D): void {
+    if (!this.isInitialized) {
+      console.warn('[ThreeVisualizationService] Cannot add object: not initialized');
+      return;
+    }
+    this.scene.add(object);
+  }
+
+  /**
+   * Remove an object from the scene
+   * @param object - Three.js object to remove
+   */
+  public removeObject(object: THREE.Object3D): void {
+    if (!this.isInitialized) return;
+    this.scene.remove(object);
+  }
+
+  /**
+   * Clear all objects from the scene (except lights and grid)
+   */
+  public clearScene(): void {
+    if (!this.isInitialized) return;
+
+    const objectsToRemove: THREE.Object3D[] = [];
+    this.scene.traverse((object) => {
+      if (
+        object !== this.scene &&
+        !(object instanceof THREE.Light) &&
+        !(object instanceof THREE.GridHelper) &&
+        !(object.userData['isPermanent'])
+      ) {
+        objectsToRemove.push(object);
+      }
+    });
+
+    objectsToRemove.forEach((obj) => this.scene.remove(obj));
+  }
+
+  /**
+   * Update camera position
+   * @param position - New camera position
+   */
+  public setCameraPosition(position: THREE.Vector3): void {
+    if (!this.isInitialized) return;
+    this.camera.position.copy(position);
+  }
+
+  /**
+   * Update camera target (look-at point)
+   * @param target - New target position
+   */
+  public setCameraTarget(target: THREE.Vector3): void {
+    if (!this.isInitialized) return;
+    this.controls.target.copy(target);
+    this.controls.update();
+  }
+
+  // ========================================================================
+  // PRIVATE - INITIALIZATION METHODS
+  // ========================================================================
+
+  /**
+   * Initialize the main scene
+   */
   private initScene(): void {
     this.scene = new THREE.Scene();
-    this.scene.background = new THREE.Color(0x020617);
-    this.scene.fog = new THREE.FogExp2(0x020617, 0.015);
+    this.scene.background = new THREE.Color(this.config.backgroundColor);
+    this.scene.fog = new THREE.FogExp2(
+      this.config.backgroundColor,
+      this.config.fogDensity
+    );
   }
 
-  private initCamera(): void {
-    this.camera = new THREE.PerspectiveCamera(
-      VISUAL_CONFIG.CAMERA_FOV,
-      window.innerWidth / window.innerHeight,
-      0.1,
-      1000
-    );
+  /**
+   * Initialize the perspective camera
+   */
+  private initCamera(config?: CameraConfiguration): void {
+    const fov = config?.fov ?? DEFAULT_CONFIG.CAMERA_FOV;
+    const near = config?.near ?? DEFAULT_CONFIG.CAMERA_NEAR;
+    const far = config?.far ?? DEFAULT_CONFIG.CAMERA_FAR;
+    const aspect = window.innerWidth / window.innerHeight;
+
+    this.camera = new THREE.PerspectiveCamera(fov, aspect, near, far);
+
+    const position = config?.position ?? DEFAULT_CONFIG.CAMERA_POSITION;
+    this.camera.position.copy(position);
+
+    if (config?.target) {
+      this.camera.lookAt(config.target);
+    }
+
     this.updateCameraPosition();
   }
 
+  /**
+   * Initialize the WebGL renderer
+   */
   private initRenderer(container: ElementRef<HTMLDivElement>): void {
-    this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    this.renderer = new THREE.WebGLRenderer({
+      antialias: this.config.antialias,
+      alpha: true,
+    });
+
     this.renderer.setSize(window.innerWidth, window.innerHeight);
-    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    this.renderer.shadowMap.enabled = true;
-    this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    this.renderer.setPixelRatio(
+      Math.min(window.devicePixelRatio, DEFAULT_CONFIG.PIXEL_RATIO_LIMIT)
+    );
+
+    if (this.config.enableShadows) {
+      this.renderer.shadowMap.enabled = true;
+      this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    }
+
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    this.renderer.toneMappingExposure = 1.2;
+    this.renderer.toneMappingExposure = this.config.toneMappingExposure;
 
     container.nativeElement.appendChild(this.renderer.domElement);
   }
 
-  private initControls(): void {
+  /**
+   * Initialize orbit controls
+   */
+  private initControls(config?: ControlConfiguration): void {
     this.controls = new OrbitControls(this.camera, this.renderer.domElement);
-    this.controls.enableDamping = true;
-    this.controls.dampingFactor = 0.05;
-    this.controls.maxPolarAngle = Math.PI / 2 - 0.1;
-    this.controls.minDistance = 20;
-    this.controls.maxDistance = 100;
+
+    this.controls.enableDamping = config?.enableDamping ?? true;
+    this.controls.dampingFactor = config?.dampingFactor ?? DEFAULT_CONFIG.DAMPING_FACTOR;
+    this.controls.maxPolarAngle = config?.maxPolarAngle ?? DEFAULT_CONFIG.MAX_POLAR_ANGLE;
+    this.controls.minDistance = config?.minDistance ?? DEFAULT_CONFIG.MIN_DISTANCE;
+    this.controls.maxDistance = config?.maxDistance ?? DEFAULT_CONFIG.MAX_DISTANCE;
+    this.controls.autoRotate = config?.autoRotate ?? false;
+    this.controls.autoRotateSpeed = config?.autoRotateSpeed ?? DEFAULT_CONFIG.AUTO_ROTATE_SPEED;
   }
 
-  private initLighting(): void {
-    // Ambient light
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.4);
+  /**
+   * Initialize professional lighting setup
+   * Creates a three-point lighting system with ambient fill
+   */
+  private initLighting(config?: LightingConfiguration): void {
+    // Ambient light for base illumination
+    const ambientIntensity = config?.ambientIntensity ?? DEFAULT_CONFIG.AMBIENT_INTENSITY;
+    const ambientColor = config?.ambientColor ?? DEFAULT_CONFIG.AMBIENT_COLOR;
+    const ambientLight = new THREE.AmbientLight(ambientColor, ambientIntensity);
+    ambientLight.userData['isPermanent'] = true;
     this.scene.add(ambientLight);
 
-    // Main directional light (cyan tint)
-    const dirLight = new THREE.DirectionalLight(0x22d3ee, 1.0);
-    dirLight.position.set(15, 30, 15);
-    dirLight.castShadow = true;
-    dirLight.shadow.mapSize.width = 2048;
-    dirLight.shadow.mapSize.height = 2048;
-    dirLight.shadow.camera.near = 0.5;
-    dirLight.shadow.camera.far = 100;
-    dirLight.shadow.camera.left = -30;
-    dirLight.shadow.camera.right = 30;
-    dirLight.shadow.camera.top = 30;
-    dirLight.shadow.camera.bottom = -30;
-    this.scene.add(dirLight);
+    if (config?.enableDirectional !== false) {
+      // Main directional light (key light)
+      const mainIntensity = config?.directionalIntensity ?? DEFAULT_CONFIG.MAIN_LIGHT_INTENSITY;
+      const mainColor = config?.directionalColor ?? DEFAULT_CONFIG.MAIN_LIGHT_COLOR;
+      const dirLight = new THREE.DirectionalLight(mainColor, mainIntensity);
+      dirLight.position.set(15, 30, 15);
+      dirLight.castShadow = this.config.enableShadows;
 
-    // Fill light (magenta tint)
-    const fillLight = new THREE.DirectionalLight(0xd946ef, 0.4);
-    fillLight.position.set(-15, 10, -15);
-    this.scene.add(fillLight);
+      if (this.config.enableShadows) {
+        dirLight.shadow.mapSize.width = DEFAULT_CONFIG.SHADOW_MAP_SIZE;
+        dirLight.shadow.mapSize.height = DEFAULT_CONFIG.SHADOW_MAP_SIZE;
+        dirLight.shadow.camera.near = 0.5;
+        dirLight.shadow.camera.far = 100;
+        dirLight.shadow.camera.left = -30;
+        dirLight.shadow.camera.right = 30;
+        dirLight.shadow.camera.top = 30;
+        dirLight.shadow.camera.bottom = -30;
+      }
 
-    // Rim light for depth
-    const rimLight = new THREE.DirectionalLight(0x6366f1, 0.3);
-    rimLight.position.set(0, 5, -20);
-    this.scene.add(rimLight);
+      dirLight.userData['isPermanent'] = true;
+      this.scene.add(dirLight);
+
+      // Fill light (softer, from opposite side)
+      const fillLight = new THREE.DirectionalLight(
+        DEFAULT_CONFIG.FILL_LIGHT_COLOR,
+        DEFAULT_CONFIG.FILL_LIGHT_INTENSITY
+      );
+      fillLight.position.set(-15, 10, -15);
+      fillLight.userData['isPermanent'] = true;
+      this.scene.add(fillLight);
+
+      // Rim light (edge definition and depth)
+      const rimLight = new THREE.DirectionalLight(
+        DEFAULT_CONFIG.RIM_LIGHT_COLOR,
+        DEFAULT_CONFIG.RIM_LIGHT_INTENSITY
+      );
+      rimLight.position.set(0, 5, -20);
+      rimLight.userData['isPermanent'] = true;
+      this.scene.add(rimLight);
+    }
   }
 
-  private initGrid(): void {
+  /**
+   * Initialize grid helper and ground plane
+   */
+  private initGrid(config?: GridConfiguration): void {
+    const size = config?.size ?? DEFAULT_CONFIG.GRID_SIZE;
+    const divisions = config?.divisions ?? DEFAULT_CONFIG.GRID_DIVISIONS;
+    const colorCenter = config?.colorCenterLine ?? DEFAULT_CONFIG.GRID_COLOR_CENTER;
+    const colorGrid = config?.colorGrid ?? DEFAULT_CONFIG.GRID_COLOR_GRID;
+
     // Grid helper
-    const gridHelper = new THREE.GridHelper(100, 50, 0x1e293b, 0x0f172a);
+    const gridHelper = new THREE.GridHelper(size, divisions, colorCenter, colorGrid);
+    gridHelper.userData['isPermanent'] = true;
     this.scene.add(gridHelper);
 
     // Ground plane for shadows
-    const planeGeometry = new THREE.PlaneGeometry(300, 300);
-    const planeMaterial = new THREE.ShadowMaterial({ opacity: 0.4 });
-    const plane = new THREE.Mesh(planeGeometry, planeMaterial);
-    plane.rotation.x = -Math.PI / 2;
-    plane.position.y = -0.01;
-    plane.receiveShadow = true;
-    this.scene.add(plane);
-  }
-
-  private initGroups(): void {
-    this.groupA = new THREE.Group();
-    this.groupS = new THREE.Group();
-    this.groupT = new THREE.Group();
-    this.groupU = new THREE.Group();
-
-    this.scene.add(this.groupA);
-    this.scene.add(this.groupS);
-    this.scene.add(this.groupT);
-    this.scene.add(this.groupU);
+    if (config?.enableGroundPlane !== false && this.config.enableShadows) {
+      const planeGeometry = new THREE.PlaneGeometry(300, 300);
+      const planeMaterial = new THREE.ShadowMaterial({opacity: 0.4});
+      const plane = new THREE.Mesh(planeGeometry, planeMaterial);
+      plane.rotation.x = -Math.PI / 2;
+      plane.position.y = -0.01;
+      plane.receiveShadow = true;
+      plane.userData['isPermanent'] = true;
+      this.scene.add(plane);
+    }
   }
 
   // ========================================================================
-  // VISUALIZATION METHODS
+  // PRIVATE - ANIMATION & RENDERING
   // ========================================================================
 
   /**
-   * Visualize matrix A (public matrix)
+   * Start the animation loop
    */
-  public visualizeMatrixA(matrix: PolyMatrix): void {
-    this.groupA.clear();
-    const { K } = KYBER_512_PARAMS;
-
-    for (let i = 0; i < K; i++) {
-      for (let j = 0; j < K; j++) {
-        const z = i === 0 ? VISUAL_CONFIG.ROW_0_Z : VISUAL_CONFIG.ROW_1_Z;
-        const x = VISUAL_CONFIG.ZONE_ALICE_X + j * 3.0;
-        const group = this.createPolyBlock(
-          matrix[i][j],
-          VISUAL_CONFIG.COLOR_MATRIX,
-          x,
-          z,
-          `A[${i},${j}]`
-        );
-        this.groupA.add(group);
-      }
-    }
-  }
-
-  /**
-   * Visualize secret vector s
-   */
-  public visualizeSecretS(vector: PolyVector): void {
-    this.groupS.clear();
-    const { K } = KYBER_512_PARAMS;
-    const s_x = VISUAL_CONFIG.ZONE_ALICE_X + 7;
-
-    for (let i = 0; i < K; i++) {
-      const z = i === 0 ? VISUAL_CONFIG.ROW_0_Z : VISUAL_CONFIG.ROW_1_Z;
-      const group = this.createPolyBlock(
-        vector[i],
-        VISUAL_CONFIG.COLOR_SECRET,
-        s_x,
-        z,
-        `s[${i}]`
-      );
-      this.groupS.add(group);
-    }
-  }
-
-  /**
-   * Visualize public key t
-   */
-  public visualizePublicKeyT(vector: PolyVector): void {
-    this.groupT.clear();
-    const { K } = KYBER_512_PARAMS;
-    const t_x = VISUAL_CONFIG.ZONE_ALICE_X + 12;
-
-    for (let i = 0; i < K; i++) {
-      const z = i === 0 ? VISUAL_CONFIG.ROW_0_Z : VISUAL_CONFIG.ROW_1_Z;
-      const group = this.createPolyBlock(
-        vector[i],
-        VISUAL_CONFIG.COLOR_PUBLIC,
-        t_x,
-        z,
-        `t[${i}]`
-      );
-      this.groupT.add(group);
-    }
-  }
-
-  /**
-   * Visualize message before encryption
-   */
-  public visualizeMessage(bit: number): void {
-    const { Q, N } = KYBER_512_PARAMS;
-    const encodedVal = bit === 1 ? Math.floor(Q / 2) : 0;
-    const msgPoly = new Poly([encodedVal, ...new Array(N - 1).fill(0)]);
-
-    if (this.groupMessage) {
-      this.scene.remove(this.groupMessage);
-    }
-
-    this.groupMessage = this.createPolyBlock(
-      msgPoly,
-      VISUAL_CONFIG.COLOR_MSG,
-      VISUAL_CONFIG.ZONE_BOB_X,
-      3,
-      `m:${bit}`
-    );
-    this.scene.add(this.groupMessage);
-  }
-
-  /**
-   * Visualize ciphertext u vector
-   */
-  public visualizeCiphertextU(vector: PolyVector): void {
-    this.groupU.clear();
-    const { K } = KYBER_512_PARAMS;
-    const u_x = VISUAL_CONFIG.ZONE_BOB_X - 4;
-
-    for (let i = 0; i < K; i++) {
-      const z = i === 0 ? VISUAL_CONFIG.ROW_0_Z : VISUAL_CONFIG.ROW_1_Z;
-      const group = this.createPolyBlock(
-        vector[i],
-        VISUAL_CONFIG.COLOR_BOB_OP,
-        u_x,
-        z,
-        `u[${i}]`
-      );
-      this.groupU.add(group);
-    }
-  }
-
-  /**
-   * Visualize ciphertext v polynomial
-   */
-  public visualizeCiphertextV(poly: Poly): void {
-    if (this.groupMessage) {
-      this.scene.remove(this.groupMessage);
-      this.groupMessage = null;
-    }
-
-    if (this.groupV) {
-      this.scene.remove(this.groupV);
-    }
-
-    this.groupV = this.createPolyBlock(
-      poly,
-      VISUAL_CONFIG.COLOR_BOB_OP,
-      VISUAL_CONFIG.ZONE_BOB_X + 2,
-      0,
-      'v'
-    );
-    this.scene.add(this.groupV);
-  }
-
-  /**
-   * Animate ciphertext transmission from Bob to Alice
-   */
-  public animateCiphertextTransmission(): Promise<void> {
-    return new Promise((resolve) => {
-      const targetX = VISUAL_CONFIG.ZONE_ALICE_X + 17;
-
-      const tweenU = new TWEEN.Tween(this.groupU.position)
-        .to({ x: targetX - 5 }, 2000)
-        .easing(TWEEN.Easing.Cubic.InOut)
-        .start();
-
-      if (this.groupV) {
-        const tweenV = new TWEEN.Tween(this.groupV.position)
-          .to({ x: targetX, z: 0 }, 2000)
-          .easing(TWEEN.Easing.Cubic.InOut)
-          .onComplete(() => resolve())
-          .start();
-      } else {
-        tweenU.onComplete(() => resolve());
-      }
-    });
-  }
-
-  /**
-   * Visualize decryption result
-   */
-  public visualizeDecryptionResult(
-    noisyPoly: Poly,
-    decryptedBit: number,
-    success: boolean
-  ): void {
-    if (this.groupResult) {
-      this.scene.remove(this.groupResult);
-    }
-
-    const color = success ? VISUAL_CONFIG.COLOR_MSG : VISUAL_CONFIG.COLOR_ERROR;
-    this.groupResult = this.createPolyBlock(
-      noisyPoly,
-      color,
-      VISUAL_CONFIG.ZONE_ALICE_X + 7,
-      3,
-      `m':${decryptedBit}`
-    );
-    this.scene.add(this.groupResult);
-
-    // Dramatic entrance animation
-    this.groupResult.scale.set(0.5, 0.5, 0.5);
-    new TWEEN.Tween(this.groupResult.scale)
-      .to({ x: 1.2, y: 1.2, z: 1.2 }, VISUAL_CONFIG.ANIM_DURATION)
-      .easing(TWEEN.Easing.Elastic.Out)
-      .start();
-
-    // Move secret key for visual clarity
-    new TWEEN.Tween(this.groupS.position)
-      .to({ x: 7 }, VISUAL_CONFIG.ANIM_DURATION)
-      .easing(TWEEN.Easing.Cubic.InOut)
-      .start();
-  }
-
-  /**
-   * Clear all visualizations for new operation
-   */
-  public clearRound(): void {
-    TWEEN.removeAll();
-
-    this.groupU.position.set(0, 0, 0);
-    this.groupS.position.set(0, 0, 0);
-    this.groupU.clear();
-
-    if (this.groupV) {
-      this.scene.remove(this.groupV);
-      this.groupV = null;
-    }
-    if (this.groupMessage) {
-      this.scene.remove(this.groupMessage);
-      this.groupMessage = null;
-    }
-    if (this.groupResult) {
-      this.scene.remove(this.groupResult);
-      this.groupResult = null;
-    }
-  }
-
-  /**
-   * Clear all visualizations completely
-   */
-  public clearAll(): void {
-    this.clearRound();
-    this.groupA.clear();
-    this.groupS.clear();
-    this.groupT.clear();
-  }
-
-  // ========================================================================
-  // LATTICE VISUALIZATION
-  // ========================================================================
-
-  /**
-   * Create 3D lattice block representing a polynomial
-   */
-  private createPolyBlock(
-    poly: Poly,
-    colorHex: number,
-    x: number,
-    z: number,
-    labelText: string
-  ): THREE.Group {
-    const group = new THREE.Group();
-    const { LATTICE_SIZE, LATTICE_SEGMENTS, NODE_SIZE, BASE_Y } = VISUAL_CONFIG;
-
-    const step = LATTICE_SIZE / LATTICE_SEGMENTS;
-    const offset = LATTICE_SIZE / 2;
-
-    group.position.set(x, BASE_Y + offset - 0.5, z);
-
-    // 1. LATTICE NODES (spheres at lattice points)
-    const sphereGeo = new THREE.SphereGeometry(NODE_SIZE, 8, 8);
-    const sphereMat = new THREE.MeshStandardMaterial({
-      color: colorHex,
-      emissive: colorHex,
-      emissiveIntensity: 0.3,
-      metalness: 0.8,
-      roughness: 0.2,
-    });
-
-    const numPoints = Math.pow(LATTICE_SEGMENTS + 1, 3);
-    const instancedSpheres = new THREE.InstancedMesh(sphereGeo, sphereMat, numPoints);
-    instancedSpheres.castShadow = true;
-
-    let idx = 0;
-    const dummy = new THREE.Object3D();
-    for (let i = 0; i <= LATTICE_SEGMENTS; i++) {
-      for (let j = 0; j <= LATTICE_SEGMENTS; j++) {
-        for (let k = 0; k <= LATTICE_SEGMENTS; k++) {
-          dummy.position.set(
-            i * step - offset,
-            j * step - offset,
-            k * step - offset
-          );
-          dummy.updateMatrix();
-          instancedSpheres.setMatrixAt(idx++, dummy.matrix);
-        }
-      }
-    }
-    instancedSpheres.instanceMatrix.needsUpdate = true;
-    group.add(instancedSpheres);
-
-    // 2. WIREFRAME EDGES
-    const boxGeo = new THREE.BoxGeometry(
-      LATTICE_SIZE,
-      LATTICE_SIZE,
-      LATTICE_SIZE,
-      LATTICE_SEGMENTS,
-      LATTICE_SEGMENTS,
-      LATTICE_SEGMENTS
-    );
-    const wireframe = new THREE.WireframeGeometry(boxGeo);
-    const lineMat = new THREE.LineBasicMaterial({
-      color: colorHex,
-      transparent: true,
-      opacity: VISUAL_CONFIG.WIREFRAME_OPACITY,
-    });
-    const lines = new THREE.LineSegments(wireframe, lineMat);
-    group.add(lines);
-
-    // 3. INNER GLOWING CORE
-    const coreGeo = new THREE.BoxGeometry(
-      LATTICE_SIZE * 0.4,
-      LATTICE_SIZE * 0.4,
-      LATTICE_SIZE * 0.4
-    );
-    const coreMat = new THREE.MeshBasicMaterial({
-      color: colorHex,
-      transparent: true,
-      opacity: VISUAL_CONFIG.CORE_OPACITY,
-    });
-    const core = new THREE.Mesh(coreGeo, coreMat);
-    core.userData = { pulse: true }; // Marker for animation
-    group.add(core);
-
-    // 4. LABEL SPRITE
-    const sprite = this.createTextSprite(
-      labelText,
-      poly.toString(),
-      new THREE.Vector3(0, offset + 1.0, 0)
-    );
-    group.add(sprite);
-
-    // 5. ENTRANCE ANIMATION
-    group.scale.set(0, 0, 0);
-    new TWEEN.Tween(group.scale)
-      .to({ x: 1, y: 1, z: 1 }, VISUAL_CONFIG.ANIM_DURATION)
-      .easing(TWEEN.Easing.Elastic.Out)
-      .start();
-
-    return group;
-  }
-
-  /**
-   * Create text sprite label
-   */
-  private createTextSprite(
-    mainText: string,
-    subText: string,
-    position: THREE.Vector3
-  ): THREE.Sprite {
-    const canvas = document.createElement('canvas');
-    const ctx = canvas.getContext('2d')!;
-    canvas.width = 512;
-    canvas.height = 128;
-
-    ctx.fillStyle = 'rgba(0,0,0,0)';
-    ctx.fillRect(0, 0, 512, 128);
-
-    // Main text
-    ctx.font = 'bold 42px Inter, system-ui, sans-serif';
-    ctx.fillStyle = '#f8fafc';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.shadowColor = '#ffffff';
-    ctx.shadowBlur = 4;
-    ctx.fillText(mainText, 256, 48);
-
-    // Subtext
-    if (subText) {
-      ctx.font = '24px monospace';
-      ctx.fillStyle = '#94a3b8';
-      ctx.shadowBlur = 0;
-      ctx.fillText(subText, 256, 96);
-    }
-
-    const texture = new THREE.CanvasTexture(canvas);
-    texture.minFilter = THREE.LinearFilter;
-    const mat = new THREE.SpriteMaterial({ map: texture, transparent: true });
-    const sprite = new THREE.Sprite(mat);
-    sprite.position.copy(position);
-    sprite.scale.set(6, 1.5, 1);
-
-    return sprite;
-  }
-
-  // ========================================================================
-  // ANIMATION & RENDERING
-  // ========================================================================
-
   private startAnimation(): void {
-    const animate = (time: number) => {
+    const animate = () => {
       this.animationFrameId = requestAnimationFrame(animate);
 
-      TWEEN.update(time);
+      // Update controls
       this.controls.update();
 
-      // Pulse animation for core elements
-      const scale = 1 + Math.sin(time * 0.002) * 0.1;
-      this.scene.traverse((object) => {
-        if (object.userData['pulse']) {
-          object.scale.set(scale, scale, scale);
-        }
-      });
-
+      // Render scene
       this.renderer.render(this.scene, this.camera);
     };
-    animate(0);
+
+    animate();
   }
 
+  /**
+   * Update camera position based on aspect ratio
+   * Ensures proper framing on different screen sizes
+   */
   private updateCameraPosition(): void {
     const aspect = window.innerWidth / window.innerHeight;
-    const baseZ = VISUAL_CONFIG.CAMERA_BASE_Z;
+    const baseZ = DEFAULT_CONFIG.CAMERA_POSITION.z;
+    const baseY = DEFAULT_CONFIG.CAMERA_POSITION.y;
 
     if (aspect < 1.0) {
-      // Mobile/portrait
-      this.camera.position.set(0, 40 + (1 / aspect) * 15, baseZ / (aspect * 0.7));
+      // Portrait mode: move camera further back and up
+      this.camera.position.set(
+        0,
+        baseY + (1 / aspect) * 15,
+        baseZ / (aspect * 0.7)
+      );
     } else {
-      // Desktop/landscape
-      this.camera.position.set(0, 30, baseZ);
+      // Landscape mode: use standard position
+      this.camera.position.set(0, baseY, baseZ);
     }
   }
 
+  /**
+   * Handle window resize events
+   */
   private onWindowResize(): void {
+    if (!this.isInitialized) return;
+
     const aspect = window.innerWidth / window.innerHeight;
+
+    // Update camera
     this.camera.aspect = aspect;
     this.camera.updateProjectionMatrix();
+
+    // Update renderer
     this.renderer.setSize(window.innerWidth, window.innerHeight);
+
+    // Update camera position for aspect ratio
     this.updateCameraPosition();
   }
 }

@@ -4,9 +4,9 @@
  * @author Doctorate Level Implementation
  */
 
-import { Component, Input } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { CryptoOperation } from '../../core/services/kyber-crypto.service';
+import {Component, Input} from '@angular/core';
+import {CommonModule} from '@angular/common';
+import {CryptoOperation} from '../../core/services/kyber-crypto.service';
 
 interface EducationalContent {
   title: string;

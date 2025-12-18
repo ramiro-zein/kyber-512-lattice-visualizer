@@ -1,11 +1,4 @@
 /**
- * @fileoverview Kyber-512 Mathematical Types and Models
- * @description Type definitions for Kyber post-quantum cryptographic algorithm
- * @author Doctorate Level Implementation
- * @version 2.0.0
- */
-
-/**
  * Kyber-512 Security Parameters
  * NIST Level 1 - Equivalent to AES-128 security
  */
@@ -75,7 +68,7 @@ export class Poly {
    * @returns Product polynomial
    */
   mul(other: Poly): Poly {
-    const { N, Q } = KYBER_512_PARAMS;
+    const {N, Q} = KYBER_512_PARAMS;
     const res = new Array(2 * N).fill(0);
 
     // Schoolbook multiplication
@@ -219,7 +212,7 @@ export function randInt(max: number): number {
  * @returns Sample from CBD
  */
 export function cbd(): number {
-  const { ETA } = KYBER_512_PARAMS;
+  const {ETA} = KYBER_512_PARAMS;
   let a = 0;
   let b = 0;
 
@@ -256,5 +249,5 @@ export function computePolyStatistics(poly: Poly): PolyStatistics {
   // L2 norm
   const norm = Math.sqrt(coeffs.reduce((acc, val) => acc + val * val, 0));
 
-  return { mean, stdDev, max, min, norm };
+  return {mean, stdDev, max, min, norm};
 }

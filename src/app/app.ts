@@ -9,21 +9,15 @@ import {
   inject,
 } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
-import { RouterOutlet } from '@angular/router';
-import { KyberCryptoService, CryptoEvent, CryptoOperation } from './core/services/kyber-crypto.service';
 import { ThreeVisualizationService } from './core/services/three-visualization.service';
-import { KYBER_512_PARAMS, PolyStatistics, computePolyStatistics } from './core/models/kyber.types';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { MathAnalysisPanelComponent } from './components/kyber-visualization/math-analysis-panel.component';
-import { EducationalPanelComponent } from './components/kyber-visualization/educational-panel.component';
+import * as THREE from 'three';
 
 /**
- * Main application component for Kyber-512 visualization
- * Orchestrates cryptographic operations and 3D visualization
+ * Main application component for professional 3D visualization
+ * Clean 3D environment ready for custom content
  */
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet, MathAnalysisPanelComponent, EducationalPanelComponent],
   templateUrl: './app.html',
   styleUrl: './app.scss',
 })
@@ -31,224 +25,100 @@ export class App implements OnDestroy {
   @ViewChild('canvasContainer', { static: false })
   canvasContainer!: ElementRef<HTMLDivElement>;
 
-  // UI state
-  isKeyGenDisabled = false;
-  isEncryptDisabled = true;
-  isDecryptDisabled = true;
-
-  // Kyber parameters for display
-  readonly kyberParams = KYBER_512_PARAMS;
-
-  // Analysis panels state
-  currentPolyStats: PolyStatistics | null = null;
-  currentPolyName: string = '';
-  currentOperation: CryptoOperation | null = null;
-
   // Platform check
   private isBrowser: boolean;
 
+  // UI State
+  autoRotateEnabled = false;
+
   constructor(
     private injector: Injector,
-    private cryptoService: KyberCryptoService,
     private visualService: ThreeVisualizationService
   ) {
     this.isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
+
     // Initialize 3D scene after render
     afterNextRender(
       () => {
-        this.visualService.initialize(this.canvasContainer);
-        this.setupEventListeners();
+        this.initializeVisualization();
       },
       { injector: this.injector }
     );
-
-    // Subscribe to crypto events for logging
-    this.cryptoService.events$
-      .pipe(takeUntilDestroyed())
-      .subscribe((events) => {
-        if (events.length > 0) {
-          const latestEvent = events[events.length - 1];
-          this.handleCryptoEvent(latestEvent);
-        }
-      });
   }
 
   ngOnDestroy(): void {
     this.visualService.dispose();
   }
 
-  /**
-   * Setup listeners for crypto state changes
-   */
-  private setupEventListeners(): void {
-    this.cryptoService.state$.pipe(takeUntilDestroyed()).subscribe((state) => {
-      // Update UI state based on crypto state
-      this.isEncryptDisabled = state.t.length === 0;
-      this.isDecryptDisabled = state.u.length === 0 || state.v === null;
-    });
-  }
-
-  /**
-   * Handle crypto events and update visualization
-   */
-  private handleCryptoEvent(event: CryptoEvent): void {
-    this.log(event.message, event.type);
-  }
-
   // ========================================================================
-  // CRYPTOGRAPHIC OPERATIONS WITH VISUALIZATION
+  // INITIALIZATION
   // ========================================================================
 
   /**
-   * Generate Kyber-512 key pair
+   * Initialize the 3D visualization with professional configuration
    */
-  async runKeyGen(): Promise<void> {
-    this.isKeyGenDisabled = true;
-    this.visualService.clearAll();
-    this.currentOperation = CryptoOperation.KEY_GENERATION;
+  private initializeVisualization(): void {
+    this.visualService.initialize(
+      this.canvasContainer,
+      {
+        backgroundColor: 0x020617,
+        fogDensity: 0.015,
+        enableShadows: true,
+        antialias: true,
+        toneMappingExposure: 1.2,
+      },
+      {
+        fov: 40,
+        position: new THREE.Vector3(0, 30, 55),
+      },
+      {
+        ambientIntensity: 0.4,
+        enableDirectional: true,
+        directionalIntensity: 1.0,
+      },
+      {
+        enableDamping: true,
+        dampingFactor: 0.05,
+        minDistance: 20,
+        maxDistance: 100,
+        autoRotate: false,
+      }
+    );
 
-    try {
-      // Generate keys
-      await this.cryptoService.generateKeys();
-
-      const state = this.cryptoService.currentState;
-
-      // Update analysis panel with matrix A[0][0]
-      this.currentPolyStats = computePolyStatistics(state.A[0][0]);
-      this.currentPolyName = 'A[0,0] - Matriz Pública';
-
-      // Visualize matrix A
-      this.visualService.visualizeMatrixA(state.A);
-
-      // Visualize secret after delay
-      setTimeout(() => {
-        this.visualService.visualizeSecretS(state.s);
-        // Update analysis with secret s[0]
-        this.currentPolyStats = computePolyStatistics(state.s[0]);
-        this.currentPolyName = 's[0] - Vector Secreto (CBD)';
-      }, 1200);
-
-      // Visualize public key after delay
-      setTimeout(() => {
-        this.visualService.visualizePublicKeyT(state.t);
-        // Update analysis with public key t[0]
-        this.currentPolyStats = computePolyStatistics(state.t[0]);
-        this.currentPolyName = 't[0] - Llave Pública';
-      }, 3000);
-
-      // Enable encryption after completion
-      setTimeout(() => {
-        this.isEncryptDisabled = false;
-      }, 4500);
-    } catch (error) {
-      console.error('Key generation error:', error);
-      this.log('Error en generación de llaves', 'error');
-    } finally {
-      this.isKeyGenDisabled = false;
-    }
-  }
-
-  /**
-   * Encrypt a bit
-   */
-  async startEncrypt(bit: number): Promise<void> {
-    if (!this.cryptoService.hasKeys()) {
-      this.log('Primero debes generar las llaves', 'error');
-      return;
-    }
-
-    this.visualService.clearRound();
-    this.currentOperation = CryptoOperation.ENCRYPTION;
-
-    try {
-      // Show message
-      this.visualService.visualizeMessage(bit);
-
-      // Encrypt
-      await this.cryptoService.encrypt(bit);
-
-      const state = this.cryptoService.currentState;
-
-      // Update analysis with random vector r[0]
-      this.currentPolyStats = computePolyStatistics(state.r[0]);
-      this.currentPolyName = 'r[0] - Vector Aleatorio (CBD)';
-
-      // Visualize u vector
-      setTimeout(() => {
-        this.visualService.visualizeCiphertextU(state.u);
-        // Update analysis with u[0]
-        this.currentPolyStats = computePolyStatistics(state.u[0]);
-        this.currentPolyName = 'u[0] - Ciphertext (parte 1)';
-      }, 1200);
-
-      // Visualize v polynomial
-      setTimeout(() => {
-        if (state.v) {
-          this.visualService.visualizeCiphertextV(state.v);
-          // Update analysis with v
-          this.currentPolyStats = computePolyStatistics(state.v);
-          this.currentPolyName = 'v - Ciphertext (parte 2)';
-        }
-      }, 2500);
-
-      // Animate transmission
-      setTimeout(async () => {
-        await this.visualService.animateCiphertextTransmission();
-        this.isDecryptDisabled = false;
-      }, 4000);
-    } catch (error) {
-      console.error('Encryption error:', error);
-      this.log('Error en encriptación', 'error');
-    }
-  }
-
-  /**
-   * Decrypt ciphertext
-   */
-  async runDecrypt(): Promise<void> {
-    if (!this.cryptoService.hasCiphertext()) {
-      this.log('Primero debes encriptar un mensaje', 'error');
-      return;
-    }
-
-    this.currentOperation = CryptoOperation.DECRYPTION;
-
-    try {
-      const decryptedBit = await this.cryptoService.decrypt();
-      const state = this.cryptoService.currentState;
-
-      // Compute noisy message for visualization
-      const { Poly: PolyClass } = await import('./core/models/kyber.types');
-      let s_dot_u = new PolyClass();
-      state.s.forEach((p, i) => {
-        s_dot_u = s_dot_u.add(p.mul(state.u[i]));
-      });
-      const noisyM = state.v!.sub(s_dot_u);
-
-      const success = decryptedBit === state.msgBit;
-
-      // Update analysis with noisy message
-      this.currentPolyStats = computePolyStatistics(noisyM);
-      this.currentPolyName = `m' - Mensaje Recuperado (bit=${decryptedBit})`;
-
-      setTimeout(() => {
-        this.visualService.visualizeDecryptionResult(noisyM, decryptedBit, success);
-      }, 1000);
-    } catch (error) {
-      console.error('Decryption error:', error);
-      this.log('Error en desencriptación', 'error');
-    }
+    this.log('Entorno 3D inicializado correctamente', 'success');
+    this.log('Sistema de renderizado: WebGL con tone mapping ACES', 'info');
+    this.log('Iluminación: Sistema de 3 puntos profesional', 'info');
+    this.log('Listo para visualización de modelo de cifrado', 'info');
   }
 
   // ========================================================================
-  // UI HELPER METHODS
+  // UI CONTROLS
+  // ========================================================================
+
+  /**
+   * Toggle auto-rotation of camera
+   */
+  toggleAutoRotate(): void {
+    this.autoRotateEnabled = !this.autoRotateEnabled;
+    const controls = this.visualService.getControls();
+    controls.autoRotate = this.autoRotateEnabled;
+    this.log(
+      `Auto-rotación ${this.autoRotateEnabled ? 'activada' : 'desactivada'}`,
+      'info'
+    );
+  }
+
+  // ========================================================================
+  // LOGGING
   // ========================================================================
 
   /**
    * Log message to UI
    */
-  private log(msg: string, type: 'info' | 'action' | 'success' | 'error' = 'info'): void {
-    // Only run in browser environment
+  private log(
+    msg: string,
+    type: 'info' | 'action' | 'success' | 'error' = 'info'
+  ): void {
     if (!this.isBrowser) return;
 
     const logDiv = document.getElementById('status-log');

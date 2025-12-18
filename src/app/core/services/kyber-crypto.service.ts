@@ -1,9 +1,3 @@
-/**
- * @fileoverview Kyber-512 Cryptographic Operations Service
- * @description Complete implementation of Kyber-512 post-quantum KEM
- * @author Doctorate Level Implementation
- */
-
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable } from 'rxjs';
 import {
@@ -13,9 +7,7 @@ import {
   PolyMatrix,
   KYBER_512_PARAMS,
   CryptoOperation,
-  mod,
   computePolyStatistics,
-  PolyStatistics,
 } from '../models/kyber.types';
 
 // Re-export for convenience
@@ -40,7 +32,7 @@ export interface CryptoEvent {
 }
 
 /**
- * Service managing Kyber-512 cryptographic operations
+ * Service managing Kyber-512¶ cryptographic operations
  * Implements the full Kyber Key Encapsulation Mechanism
  */
 @Injectable({
@@ -59,7 +51,7 @@ export class KyberCryptoService {
     this.logEvent({
       operation: CryptoOperation.KEY_GENERATION,
       step: 'init',
-      message: 'Kernel matemático inicializado',
+      message: 'Mapa inicializado',
       type: 'info',
       timestamp: new Date(),
     });
