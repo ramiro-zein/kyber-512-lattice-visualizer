@@ -40,61 +40,59 @@ import { KyberOrchestrator, KyberState } from './animations/kyber-orchestrator';
             (click)="runKeyGen()"
             [disabled]="isRunning()"
             [class.active]="currentState().phase === 'keygen'"
+            class="btn-keygen"
           >
-            <span class="icon">🔑</span>
             KeyGen
           </button>
           <button
             (click)="runEncaps()"
             [disabled]="isRunning() || !hasKeys()"
             [class.active]="currentState().phase === 'encaps'"
+            class="btn-encaps"
           >
-            <span class="icon">📦</span>
             Encaps
           </button>
           <button
             (click)="runDecaps()"
             [disabled]="isRunning() || !hasCipher()"
             [class.active]="currentState().phase === 'decaps'"
+            class="btn-decaps"
           >
-            <span class="icon">🔓</span>
             Decaps
           </button>
-          <button (click)="runFullDemo()" [disabled]="isRunning()" class="demo-btn">
-            <span class="icon">▶️</span>
+          <button (click)="runFullDemo()" [disabled]="isRunning()" class="btn-demo">
             Demo Completa
           </button>
-          <button (click)="reset()" class="reset-btn">
-            <span class="icon">🔄</span>
+          <button (click)="reset()" class="btn-reset">
             Reset
           </button>
         </div>
 
         <div class="legend">
-          <h3>Leyenda</h3>
+          <h3>Elementos</h3>
           <div class="legend-item">
             <span class="color-box matrix-a"></span>
-            <span>Matriz A (pública)</span>
+            <span>A : matriz publica</span>
           </div>
           <div class="legend-item">
             <span class="color-box secret-s"></span>
-            <span>Secreto s (privado)</span>
+            <span>s : secreto (sk)</span>
           </div>
           <div class="legend-item">
             <span class="color-box vector-t"></span>
-            <span>Vector t (público)</span>
+            <span>t = As + e</span>
           </div>
           <div class="legend-item">
             <span class="color-box error-e"></span>
-            <span>Errores e (ruido)</span>
+            <span>e : error CBD</span>
           </div>
           <div class="legend-item">
             <span class="color-box cipher"></span>
-            <span>Cifrado (u, v)</span>
+            <span>c = (u, v)</span>
           </div>
           <div class="legend-item">
             <span class="color-box message"></span>
-            <span>Mensaje m</span>
+            <span>m : mensaje</span>
           </div>
         </div>
 
@@ -143,13 +141,12 @@ import { KyberOrchestrator, KyberState } from './animations/kyber-orchestrator';
       }
 
       .title h1 {
-        font-family: 'JetBrains Mono', 'Fira Code', monospace;
-        font-size: 2.5rem;
+        font-family: 'Consolas', 'Monaco', monospace;
+        font-size: 2rem;
         margin: 0;
-        background: linear-gradient(90deg, #00bfff, #ffd700, #50c878);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
+        color: #e8e8e8;
+        font-weight: 400;
+        letter-spacing: 2px;
       }
 
       .subtitle {
@@ -160,42 +157,45 @@ import { KyberOrchestrator, KyberState } from './animations/kyber-orchestrator';
 
       .status-panel {
         position: absolute;
-        top: 100px;
+        top: 90px;
         left: 50%;
         transform: translateX(-50%);
-        background: rgba(0, 0, 0, 0.7);
-        padding: 15px 30px;
-        border-radius: 10px;
-        border: 1px solid rgba(255, 255, 255, 0.1);
+        background: rgba(20, 24, 32, 0.92);
+        padding: 14px 28px;
+        border-radius: 4px;
+        border: 1px solid rgba(255, 255, 255, 0.08);
         text-align: center;
-        min-width: 300px;
+        min-width: 320px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
       }
 
       .phase {
-        font-family: 'JetBrains Mono', monospace;
-        font-size: 1.2rem;
-        color: #00bfff;
-        font-weight: bold;
+        font-family: 'Consolas', 'Monaco', monospace;
+        font-size: 1rem;
+        color: #70a0c0;
+        font-weight: 500;
+        letter-spacing: 1px;
       }
 
       .sub-phase {
-        color: rgba(255, 255, 255, 0.8);
-        font-size: 0.9rem;
-        margin-top: 5px;
+        color: #909090;
+        font-size: 0.8rem;
+        margin-top: 6px;
+        font-family: 'Consolas', monospace;
       }
 
       .progress-bar {
         width: 100%;
-        height: 4px;
-        background: rgba(255, 255, 255, 0.2);
-        border-radius: 2px;
+        height: 3px;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 1px;
         margin-top: 10px;
         overflow: hidden;
       }
 
       .progress-fill {
         height: 100%;
-        background: linear-gradient(90deg, #00bfff, #50c878);
+        background: linear-gradient(90deg, #4080a0, #60a080);
         transition: width 0.3s ease;
       }
 
@@ -210,48 +210,60 @@ import { KyberOrchestrator, KyberState } from './animations/kyber-orchestrator';
       }
 
       .controls button {
-        font-family: 'JetBrains Mono', monospace;
-        padding: 12px 24px;
-        font-size: 1rem;
+        font-family: 'Consolas', 'Monaco', monospace;
+        padding: 10px 20px;
+        font-size: 0.9rem;
+        font-weight: 500;
+        letter-spacing: 0.5px;
         border: none;
-        border-radius: 8px;
+        border-radius: 4px;
         cursor: pointer;
-        transition: all 0.3s ease;
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        background: rgba(255, 255, 255, 0.1);
-        color: white;
-        border: 1px solid rgba(255, 255, 255, 0.2);
+        transition: all 0.2s ease;
+        text-transform: uppercase;
+        background: rgba(40, 44, 52, 0.9);
+        color: #e0e0e0;
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
       }
 
       .controls button:hover:not(:disabled) {
-        background: rgba(255, 255, 255, 0.2);
-        transform: translateY(-2px);
+        background: rgba(60, 64, 72, 0.95);
+        border-color: rgba(255, 255, 255, 0.3);
+        transform: translateY(-1px);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
       }
 
       .controls button:disabled {
-        opacity: 0.5;
+        opacity: 0.4;
         cursor: not-allowed;
       }
 
       .controls button.active {
-        background: rgba(0, 191, 255, 0.3);
-        border-color: #00bfff;
+        background: rgba(0, 120, 180, 0.8);
+        border-color: #0090d0;
+        color: #ffffff;
       }
 
-      .controls button.demo-btn {
-        background: linear-gradient(135deg, rgba(80, 200, 120, 0.3), rgba(0, 191, 255, 0.3));
-        border-color: #50c878;
+      .controls button.btn-keygen {
+        border-left: 3px solid #c0c0c0;
       }
 
-      .controls button.reset-btn {
-        background: rgba(139, 0, 0, 0.3);
-        border-color: #8b0000;
+      .controls button.btn-encaps {
+        border-left: 3px solid #50c878;
       }
 
-      .icon {
-        font-size: 1.2rem;
+      .controls button.btn-decaps {
+        border-left: 3px solid #ffd700;
+      }
+
+      .controls button.btn-demo {
+        background: rgba(0, 80, 120, 0.8);
+        border-left: 3px solid #00bfff;
+      }
+
+      .controls button.btn-reset {
+        background: rgba(80, 40, 40, 0.8);
+        border-left: 3px solid #8b4444;
       }
 
       .legend {
@@ -259,67 +271,80 @@ import { KyberOrchestrator, KyberState } from './animations/kyber-orchestrator';
         right: 20px;
         top: 50%;
         transform: translateY(-50%);
-        background: rgba(0, 0, 0, 0.7);
-        padding: 15px;
-        border-radius: 10px;
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        color: white;
+        background: rgba(20, 24, 32, 0.92);
+        padding: 16px 20px;
+        border-radius: 4px;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        color: #d0d0d0;
+        font-family: 'Consolas', 'Monaco', monospace;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
       }
 
       .legend h3 {
-        margin: 0 0 10px 0;
-        font-size: 0.9rem;
-        opacity: 0.7;
+        margin: 0 0 12px 0;
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        color: #888;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        padding-bottom: 8px;
       }
 
       .legend-item {
         display: flex;
         align-items: center;
-        gap: 10px;
+        gap: 12px;
         margin-bottom: 8px;
-        font-size: 0.85rem;
+        font-size: 0.8rem;
+        font-family: 'Consolas', monospace;
       }
 
       .color-box {
-        width: 16px;
-        height: 16px;
-        border-radius: 4px;
+        width: 12px;
+        height: 12px;
+        border-radius: 2px;
+        border: 1px solid rgba(255, 255, 255, 0.2);
       }
 
       .matrix-a {
-        background: #c0c0c0;
+        background: #a0a0a0;
       }
       .secret-s {
-        background: #8b0000;
+        background: #a03030;
       }
       .vector-t {
-        background: #ffd700;
+        background: #d4a520;
       }
       .error-e {
-        background: #9400d3;
+        background: #7030a0;
       }
       .cipher {
-        background: #50c878;
+        background: #30a060;
       }
       .message {
-        background: #ffffff;
+        background: #e0e0e0;
       }
 
       .info-panel {
         position: absolute;
         left: 20px;
         bottom: 100px;
-        background: rgba(0, 0, 0, 0.7);
-        padding: 15px;
-        border-radius: 10px;
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        color: rgba(255, 255, 255, 0.7);
-        font-family: 'JetBrains Mono', monospace;
-        font-size: 0.8rem;
+        background: rgba(20, 24, 32, 0.92);
+        padding: 14px 18px;
+        border-radius: 4px;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        color: #a0a0a0;
+        font-family: 'Consolas', 'Monaco', monospace;
+        font-size: 0.75rem;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
       }
 
       .info-panel p {
-        margin: 5px 0;
+        margin: 4px 0;
+      }
+
+      .info-panel strong {
+        color: #c0c0c0;
       }
     `,
   ],
