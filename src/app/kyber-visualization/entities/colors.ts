@@ -1,41 +1,22 @@
 import * as THREE from 'three';
 
-// Paleta de colores según especificación
+/** Paleta de colores semánticos para elementos del algoritmo Kyber */
 export const KYBER_COLORS = {
-  // Matriz pública A - Plateado, público, neutral
-  MATRIX_A: new THREE.Color(0xc0c0c0),
-
-  // Secreto s - Rojo sangre, privado, crítico
-  SECRET_S: new THREE.Color(0x8b0000),
-
-  // Errores e, e1, e2 - Violeta, ruido cuántico
-  ERROR_E: new THREE.Color(0x9400d3),
-
-  // Vector efímero r - Azul eléctrico, temporal
-  EPHEMERAL_R: new THREE.Color(0x00bfff),
-
-  // Vector público t - Dorado, derivado valioso
-  VECTOR_T: new THREE.Color(0xffd700),
-
-  // Cifrado u, v - Esmeralda, protegido
-  CIPHERTEXT: new THREE.Color(0x50c878),
-
-  // Mensaje m - Blanco, información pura
-  MESSAGE_M: new THREE.Color(0xffffff),
-
-  // Rayos de operaciones
-  OPERATION_RAY: new THREE.Color(0xffe4b5),
-
-  // Verificación
-  SUCCESS: new THREE.Color(0x00ff00),
-  FAILURE: new THREE.Color(0xff0000),
-
-  // Fondo
+  MATRIX_A: new THREE.Color(0xc0c0c0),      // Matriz pública A - plateado
+  SECRET_S: new THREE.Color(0x8b0000),       // Secreto s - rojo oscuro
+  ERROR_E: new THREE.Color(0x9400d3),        // Errores e - violeta
+  EPHEMERAL_R: new THREE.Color(0x00bfff),    // Vector efímero r - azul
+  VECTOR_T: new THREE.Color(0xffd700),       // Vector público t - dorado
+  CIPHERTEXT: new THREE.Color(0x50c878),     // Cifrado (u, v) - esmeralda
+  MESSAGE_M: new THREE.Color(0xffffff),      // Mensaje m - blanco
+  OPERATION_RAY: new THREE.Color(0xffe4b5),  // Rayos de operaciones
+  SUCCESS: new THREE.Color(0x00ff00),        // Verificación exitosa
+  FAILURE: new THREE.Color(0xff0000),        // Verificación fallida
   BACKGROUND_DARK: new THREE.Color(0x000a14),
   BACKGROUND_LIGHT: new THREE.Color(0x001133),
 };
 
-// Materiales predefinidos
+/** Material tipo vidrio con transmisión de luz */
 export function createGlassMaterial(color: THREE.Color, opacity = 0.7): THREE.MeshPhysicalMaterial {
   return new THREE.MeshPhysicalMaterial({
     color: color,
@@ -51,10 +32,8 @@ export function createGlassMaterial(color: THREE.Color, opacity = 0.7): THREE.Me
   });
 }
 
-export function createEmissiveMaterial(
-  color: THREE.Color,
-  intensity = 0.5
-): THREE.MeshStandardMaterial {
+/** Material emisivo para elementos que brillan */
+export function createEmissiveMaterial(color: THREE.Color, intensity = 0.5): THREE.MeshStandardMaterial {
   return new THREE.MeshStandardMaterial({
     color: color,
     emissive: color,
@@ -64,6 +43,7 @@ export function createEmissiveMaterial(
   });
 }
 
+/** Material para líneas wireframe */
 export function createWireframeMaterial(color: THREE.Color): THREE.LineBasicMaterial {
   return new THREE.LineBasicMaterial({
     color: color,

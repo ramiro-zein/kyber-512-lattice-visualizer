@@ -2,6 +2,10 @@ import { Injectable, ElementRef, NgZone } from '@angular/core';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 
+/**
+ * Servicio de gestión de la escena Three.js.
+ * Maneja el renderer, cámara, controles y loop de animación.
+ */
 @Injectable({
   providedIn: 'root',
 })
@@ -12,23 +16,19 @@ export class SceneService {
   private controls!: OrbitControls;
   private animationId: number | null = null;
   private clock = new THREE.Clock();
-
-  // Callbacks para animación
   private animationCallbacks: ((delta: number, elapsed: number) => void)[] = [];
 
   constructor(private ngZone: NgZone) {}
 
+  /** Inicializa la escena con canvas, cámara, renderer e iluminación */
   initialize(canvas: ElementRef<HTMLCanvasElement>, width: number, height: number): void {
-    // Escena
     this.scene = new THREE.Scene();
     this.scene.background = new THREE.Color(0x000a14);
 
-    // Cámara según especificación
     this.camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 2000);
     this.camera.position.set(0, 200, 400);
     this.camera.lookAt(0, 50, 0);
 
-    // Renderer
     this.renderer = new THREE.WebGLRenderer({
       canvas: canvas.nativeElement,
       antialias: true,
@@ -39,26 +39,20 @@ export class SceneService {
     this.renderer.shadowMap.enabled = true;
     this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
-    // Controles de órbita
     this.controls = new OrbitControls(this.camera, this.renderer.domElement);
     this.controls.enableDamping = true;
     this.controls.dampingFactor = 0.05;
     this.controls.minDistance = 50;
     this.controls.maxDistance = 800;
 
-    // Iluminación según especificación
     this.setupLighting();
-
-    // Iniciar loop de animación
     this.startAnimationLoop();
   }
 
   private setupLighting(): void {
-    // Luz ambiente muy baja (10%)
     const ambientLight = new THREE.AmbientLight(0xffffff, 0.1);
     this.scene.add(ambientLight);
 
-    // Luz principal
     const mainLight = new THREE.DirectionalLight(0xffffff, 0.8);
     mainLight.position.set(100, 200, 100);
     mainLight.castShadow = true;
@@ -66,7 +60,6 @@ export class SceneService {
     mainLight.shadow.mapSize.height = 2048;
     this.scene.add(mainLight);
 
-    // Luces de acento
     const blueLight = new THREE.PointLight(0x00bfff, 0.5, 500);
     blueLight.position.set(-100, 100, -100);
     this.scene.add(blueLight);
@@ -84,9 +77,7 @@ export class SceneService {
         const delta = this.clock.getDelta();
         const elapsed = this.clock.getElapsedTime();
 
-        // Ejecutar callbacks de animación
         this.animationCallbacks.forEach((cb) => cb(delta, elapsed));
-
         this.controls.update();
         this.renderer.render(this.scene, this.camera);
       };

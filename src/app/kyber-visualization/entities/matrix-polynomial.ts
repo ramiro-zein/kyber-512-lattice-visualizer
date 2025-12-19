@@ -3,8 +3,8 @@ import { TorusPolynomial } from './torus-polynomial';
 import { KYBER_COLORS, createWireframeMaterial } from './colors';
 
 /**
- * Representa una matriz k×k de polinomios en Rq
- * Visualizada como una cuadrícula de toros en el plano XZ
+ * Matriz k x k de polinomios en R_q.
+ * Visualizada como una cuadrícula de toros en el plano XZ.
  */
 export class MatrixPolynomial extends THREE.Group {
   private tori: TorusPolynomial[][] = [];
@@ -27,6 +27,7 @@ export class MatrixPolynomial extends THREE.Group {
     this.createLabel();
   }
 
+  /** Crea la cuadrícula de toros */
   private createToriGrid(): void {
     const offset = ((this.k - 1) * this.TORUS_SPACING) / 2;
 
@@ -34,30 +35,26 @@ export class MatrixPolynomial extends THREE.Group {
       this.tori[i] = [];
       for (let j = 0; j < this.k; j++) {
         const torus = new TorusPolynomial(this.baseColor, `${this.label}[${i}][${j}]`);
-
-        // Posición en cuadrícula XZ
         torus.position.x = j * this.TORUS_SPACING - offset;
         torus.position.z = i * this.TORUS_SPACING - offset;
-
         this.tori[i][j] = torus;
         this.add(torus);
       }
     }
   }
 
+  /** Crea el wireframe delimitador de la matriz */
   private createWireframe(): void {
     const offset = ((this.k - 1) * this.TORUS_SPACING) / 2;
     const halfSpacing = this.TORUS_SPACING / 2 + 10;
     const points: THREE.Vector3[] = [];
 
-    // Líneas verticales (separadores de columnas)
     for (let j = 0; j <= this.k; j++) {
       const x = j * this.TORUS_SPACING - offset - halfSpacing + 10;
       points.push(new THREE.Vector3(x, -5, -offset - halfSpacing));
       points.push(new THREE.Vector3(x, -5, offset + halfSpacing - 10));
     }
 
-    // Líneas horizontales (separadores de filas)
     for (let i = 0; i <= this.k; i++) {
       const z = i * this.TORUS_SPACING - offset - halfSpacing + 10;
       points.push(new THREE.Vector3(-offset - halfSpacing, -5, z));
@@ -66,7 +63,6 @@ export class MatrixPolynomial extends THREE.Group {
 
     const geometry = new THREE.BufferGeometry().setFromPoints(points);
     const material = createWireframeMaterial(this.baseColor);
-
     this.wireframe = new THREE.LineSegments(geometry, material);
     this.add(this.wireframe);
   }
@@ -79,7 +75,6 @@ export class MatrixPolynomial extends THREE.Group {
 
     context.fillStyle = 'transparent';
     context.fillRect(0, 0, canvas.width, canvas.height);
-
     context.font = 'bold 40px JetBrains Mono, Fira Code, monospace';
     context.fillStyle = '#ffffff';
     context.textAlign = 'center';
@@ -87,20 +82,13 @@ export class MatrixPolynomial extends THREE.Group {
     context.fillText(this.label, canvas.width / 2, canvas.height / 2);
 
     const texture = new THREE.CanvasTexture(canvas);
-    const spriteMaterial = new THREE.SpriteMaterial({
-      map: texture,
-      transparent: true,
-    });
-
+    const spriteMaterial = new THREE.SpriteMaterial({ map: texture, transparent: true });
     this.labelSprite = new THREE.Sprite(spriteMaterial);
     this.labelSprite.scale.set(20, 10, 1);
     this.labelSprite.position.y = 30;
     this.add(this.labelSprite);
   }
 
-  /**
-   * Genera coeficientes aleatorios para toda la matriz
-   */
   generateRandomCoefficients(): void {
     for (let i = 0; i < this.k; i++) {
       for (let j = 0; j < this.k; j++) {
@@ -109,22 +97,17 @@ export class MatrixPolynomial extends THREE.Group {
     }
   }
 
-  /**
-   * Anima la aparición de toda la matriz
-   */
+  /** Anima la aparición con efecto de onda desde el centro */
   async animateAppear(duration: number): Promise<void> {
-    // Ocultar todos los toros
     for (let i = 0; i < this.k; i++) {
       for (let j = 0; j < this.k; j++) {
         this.tori[i][j].scale.set(0, 0, 0);
       }
     }
 
-    // Aparecer con efecto de onda desde el centro
     const center = (this.k - 1) / 2;
     const maxDist = Math.sqrt(2) * center;
     const delayPerUnit = duration / (maxDist + 1);
-
     const promises: Promise<void>[] = [];
 
     for (let i = 0; i < this.k; i++) {
@@ -145,9 +128,6 @@ export class MatrixPolynomial extends THREE.Group {
     await Promise.all(promises);
   }
 
-  /**
-   * Anima la generación de coeficientes con parpadeo
-   */
   animateGeneration(duration: number, onComplete?: () => void): void {
     let completed = 0;
     const total = this.k * this.k;
@@ -164,9 +144,7 @@ export class MatrixPolynomial extends THREE.Group {
     }
   }
 
-  /**
-   * Rota la matriz 90° (visualización de transposición)
-   */
+  /** Rota la matriz 90 grados (visualización de transposición) */
   animateTranspose(duration: number): Promise<void> {
     return new Promise((resolve) => {
       const startRotation = this.rotation.y;
@@ -176,8 +154,6 @@ export class MatrixPolynomial extends THREE.Group {
       const animate = () => {
         const elapsed = Date.now() - startTime;
         const progress = Math.min(elapsed / duration, 1);
-
-        // Easing suave
         const eased = 1 - Math.pow(1 - progress, 3);
         this.rotation.y = startRotation + (targetRotation - startRotation) * eased;
 
@@ -192,30 +168,18 @@ export class MatrixPolynomial extends THREE.Group {
     });
   }
 
-  /**
-   * Obtiene una fila de la matriz
-   */
   getRow(i: number): TorusPolynomial[] {
     return this.tori[i] || [];
   }
 
-  /**
-   * Obtiene una columna de la matriz
-   */
   getColumn(j: number): TorusPolynomial[] {
     return this.tori.map((row) => row[j]);
   }
 
-  /**
-   * Obtiene un toro específico
-   */
   getTorus(i: number, j: number): TorusPolynomial | null {
     return this.tori[i]?.[j] || null;
   }
 
-  /**
-   * Crea rayos de conexión desde una fila hacia un vector
-   */
   createRowRays(
     rowIndex: number,
     targetPositions: THREE.Vector3[],
@@ -253,9 +217,6 @@ export class MatrixPolynomial extends THREE.Group {
     return this.label;
   }
 
-  /**
-   * Mueve la matriz a una nueva posición con animación
-   */
   animateMoveTo(targetPosition: THREE.Vector3, duration: number): Promise<void> {
     return new Promise((resolve) => {
       const startPosition = this.position.clone();
@@ -265,7 +226,6 @@ export class MatrixPolynomial extends THREE.Group {
         const elapsed = Date.now() - startTime;
         const progress = Math.min(elapsed / duration, 1);
         const eased = 1 - Math.pow(1 - progress, 3);
-
         this.position.lerpVectors(startPosition, targetPosition, eased);
 
         if (progress < 1) {

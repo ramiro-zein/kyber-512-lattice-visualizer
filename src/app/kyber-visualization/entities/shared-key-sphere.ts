@@ -1,8 +1,8 @@
 import * as THREE from 'three';
 
 /**
- * Representa la clave compartida K
- * Visualizada como una esfera holográfica/iridiscente
+ * Clave compartida K visualizada como una esfera holográfica iridiscente.
+ * Usa shaders personalizados para efecto de arcoíris dinámico.
  */
 export class SharedKeySphere extends THREE.Group {
   private sphere!: THREE.Mesh;
@@ -18,10 +18,10 @@ export class SharedKeySphere extends THREE.Group {
     this.createGlow();
   }
 
+  /** Crea la esfera principal con shader holográfico */
   private createSphere(): void {
     const geometry = new THREE.IcosahedronGeometry(this.RADIUS, 4);
 
-    // Shader material para efecto holográfico
     const material = new THREE.ShaderMaterial({
       uniforms: {
         time: { value: 0 },
@@ -48,7 +48,6 @@ export class SharedKeySphere extends THREE.Group {
 
         void main() {
           float fresnel = pow(1.0 - dot(vNormal, vec3(0.0, 0.0, 1.0)), 2.0);
-
           float wave = sin(vPosition.x * 2.0 + time) * 0.5 + 0.5;
           float wave2 = sin(vPosition.y * 2.0 + time * 1.3) * 0.5 + 0.5;
           float wave3 = sin(vPosition.z * 2.0 + time * 0.7) * 0.5 + 0.5;
@@ -58,7 +57,6 @@ export class SharedKeySphere extends THREE.Group {
           color = mix(color, colorA, wave3 * 0.5);
 
           float alpha = 0.7 + fresnel * 0.3;
-
           gl_FragColor = vec4(color, alpha);
         }
       `,
@@ -70,6 +68,7 @@ export class SharedKeySphere extends THREE.Group {
     this.add(this.sphere);
   }
 
+  /** Crea anillos orbitales decorativos */
   private createRings(): void {
     const ringGeometry = new THREE.TorusGeometry(this.RADIUS * 1.3, 0.3, 16, 64);
 
@@ -102,27 +101,18 @@ export class SharedKeySphere extends THREE.Group {
     this.add(this.glowSphere);
   }
 
-  /**
-   * Actualiza la animación (llamar en el loop)
-   */
   update(delta: number, elapsed: number): void {
-    // Actualizar shader
     const material = this.sphere.material as THREE.ShaderMaterial;
     material.uniforms['time'].value = elapsed;
 
-    // Rotar anillos
     this.rings.forEach((ring, i) => {
       ring.rotation.z += delta * (0.5 + i * 0.2);
     });
 
-    // Pulso del glow
     const pulse = 1 + Math.sin(elapsed * 2) * 0.1;
     this.glowSphere.scale.setScalar(pulse);
   }
 
-  /**
-   * Anima la aparición
-   */
   animateAppear(duration: number): Promise<void> {
     return new Promise((resolve) => {
       this.scale.set(0, 0, 0);
@@ -131,8 +121,6 @@ export class SharedKeySphere extends THREE.Group {
       const animate = () => {
         const elapsed = Date.now() - startTime;
         const progress = Math.min(elapsed / duration, 1);
-
-        // Easing elástico
         const eased = this.elasticEaseOut(progress);
         this.scale.setScalar(eased);
 
@@ -152,9 +140,7 @@ export class SharedKeySphere extends THREE.Group {
     return Math.pow(2, -10 * t) * Math.sin(((t - p / 4) * (2 * Math.PI)) / p) + 1;
   }
 
-  /**
-   * Crea un efecto de conexión con otra esfera (para mostrar que son iguales)
-   */
+  /** Crea línea de conexión visual entre dos claves compartidas */
   createConnectionTo(target: SharedKeySphere): THREE.Line {
     const points = [this.position.clone(), target.position.clone()];
     const geometry = new THREE.BufferGeometry().setFromPoints(points);

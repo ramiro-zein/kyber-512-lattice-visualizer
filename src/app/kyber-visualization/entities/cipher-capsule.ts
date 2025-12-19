@@ -4,8 +4,8 @@ import { TorusPolynomial } from './torus-polynomial';
 import { KYBER_COLORS } from './colors';
 
 /**
- * Cápsula de cifrado que contiene el ciphertext (u, v)
- * Visualizada como una esfera verde translúcida con contenido interno
+ * Cápsula de cifrado que contiene el ciphertext (u, v).
+ * Visualizada como una esfera translúcida con partículas internas.
  */
 export class CipherCapsule extends THREE.Group {
   private outerSphere!: THREE.Mesh;
@@ -57,6 +57,7 @@ export class CipherCapsule extends THREE.Group {
     this.add(this.innerGlow);
   }
 
+  /** Crea partículas con movimiento browniano dentro de la cápsula */
   private createParticles(): void {
     const particleCount = 500;
     const geometry = new THREE.BufferGeometry();
@@ -64,7 +65,6 @@ export class CipherCapsule extends THREE.Group {
     const velocities = new Float32Array(particleCount * 3);
 
     for (let i = 0; i < particleCount; i++) {
-      // Posición aleatoria dentro de la esfera
       const theta = Math.random() * Math.PI * 2;
       const phi = Math.acos(2 * Math.random() - 1);
       const r = Math.random() * this.RADIUS * 0.8;
@@ -73,7 +73,6 @@ export class CipherCapsule extends THREE.Group {
       positions[i * 3 + 1] = r * Math.sin(phi) * Math.sin(theta);
       positions[i * 3 + 2] = r * Math.cos(phi);
 
-      // Velocidades para movimiento browniano
       velocities[i * 3] = (Math.random() - 0.5) * 0.5;
       velocities[i * 3 + 1] = (Math.random() - 0.5) * 0.5;
       velocities[i * 3 + 2] = (Math.random() - 0.5) * 0.5;
@@ -94,23 +93,15 @@ export class CipherCapsule extends THREE.Group {
     this.add(this.particles);
   }
 
-  /**
-   * Inserta el vector u y el toro v en la cápsula
-   */
+  /** Inserta el vector u y el toro v dentro de la cápsula */
   setContent(u: VectorPolynomial, v: TorusPolynomial): void {
-    if (this.vectorU) {
-      this.remove(this.vectorU);
-    }
-    if (this.torusV) {
-      this.remove(this.torusV);
-    }
+    if (this.vectorU) this.remove(this.vectorU);
+    if (this.torusV) this.remove(this.torusV);
 
-    // Escalar para que quepan dentro
     const scale = 0.5;
     u.scale.setScalar(scale);
     v.scale.setScalar(scale);
 
-    // Posicionar dentro de la cápsula
     u.position.set(-10, 0, 0);
     v.position.set(15, 0, 0);
 
@@ -121,9 +112,7 @@ export class CipherCapsule extends THREE.Group {
     this.add(v);
   }
 
-  /**
-   * Anima el sellado de la cápsula
-   */
+  /** Anima el sellado de la cápsula */
   animateSeal(duration: number): Promise<void> {
     return new Promise((resolve) => {
       const startTime = Date.now();
@@ -135,10 +124,7 @@ export class CipherCapsule extends THREE.Group {
         const elapsed = Date.now() - startTime;
         const progress = Math.min(elapsed / duration, 1);
 
-        // Aumentar opacidad
         material.opacity = startOpacity + (targetOpacity - startOpacity) * progress;
-
-        // Efecto de pulso
         const pulse = 1 + Math.sin(progress * Math.PI * 4) * 0.05;
         this.outerSphere.scale.setScalar(pulse);
 
@@ -155,9 +141,7 @@ export class CipherCapsule extends THREE.Group {
     });
   }
 
-  /**
-   * Anima la apertura de la cápsula
-   */
+  /** Anima la apertura de la cápsula */
   animateOpen(duration: number): Promise<void> {
     return new Promise((resolve) => {
       const startTime = Date.now();
@@ -167,7 +151,6 @@ export class CipherCapsule extends THREE.Group {
         const elapsed = Date.now() - startTime;
         const progress = Math.min(elapsed / duration, 1);
 
-        // Reducir opacidad y expandir
         material.opacity = 0.5 * (1 - progress);
         this.outerSphere.scale.setScalar(1 + progress * 0.5);
 
@@ -183,9 +166,6 @@ export class CipherCapsule extends THREE.Group {
     });
   }
 
-  /**
-   * Anima el movimiento de la cápsula
-   */
   animateMoveTo(targetPosition: THREE.Vector3, duration: number): Promise<void> {
     return new Promise((resolve) => {
       const startPosition = this.position.clone();
@@ -194,12 +174,8 @@ export class CipherCapsule extends THREE.Group {
       const animate = () => {
         const elapsed = Date.now() - startTime;
         const progress = Math.min(elapsed / duration, 1);
-
-        // Easing suave con rebote
         const eased = 1 - Math.pow(1 - progress, 3);
         this.position.lerpVectors(startPosition, targetPosition, eased);
-
-        // Rotación durante el movimiento
         this.rotation.y += 0.02;
 
         if (progress < 1) {
@@ -213,21 +189,17 @@ export class CipherCapsule extends THREE.Group {
     });
   }
 
-  /**
-   * Actualiza las partículas (llamar en el loop de animación)
-   */
+  /** Actualiza el movimiento browniano de partículas */
   update(delta: number): void {
     const positions = this.particles.geometry.attributes['position'].array as Float32Array;
     const velocities = this.particles.geometry.userData['velocities'] as Float32Array;
     const particleCount = positions.length / 3;
 
     for (let i = 0; i < particleCount; i++) {
-      // Actualizar posición
       positions[i * 3] += velocities[i * 3] * delta;
       positions[i * 3 + 1] += velocities[i * 3 + 1] * delta;
       positions[i * 3 + 2] += velocities[i * 3 + 2] * delta;
 
-      // Verificar límites y rebotar
       const dist = Math.sqrt(
         positions[i * 3] ** 2 + positions[i * 3 + 1] ** 2 + positions[i * 3 + 2] ** 2
       );
@@ -238,21 +210,15 @@ export class CipherCapsule extends THREE.Group {
         velocities[i * 3 + 2] *= -1;
       }
 
-      // Pequeña variación aleatoria
       velocities[i * 3] += (Math.random() - 0.5) * 0.1;
       velocities[i * 3 + 1] += (Math.random() - 0.5) * 0.1;
       velocities[i * 3 + 2] += (Math.random() - 0.5) * 0.1;
     }
 
     this.particles.geometry.attributes['position'].needsUpdate = true;
-
-    // Rotación lenta
     this.particles.rotation.y += delta * 0.1;
   }
 
-  /**
-   * Anima la aparición de la cápsula
-   */
   animateAppear(duration: number): Promise<void> {
     return new Promise((resolve) => {
       this.scale.set(0, 0, 0);
@@ -261,7 +227,6 @@ export class CipherCapsule extends THREE.Group {
       const animate = () => {
         const elapsed = Date.now() - startTime;
         const progress = Math.min(elapsed / duration, 1);
-
         const eased = 1 - Math.pow(1 - progress, 3);
         this.scale.setScalar(eased);
 

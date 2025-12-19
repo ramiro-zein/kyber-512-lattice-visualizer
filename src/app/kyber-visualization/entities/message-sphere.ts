@@ -2,8 +2,8 @@ import * as THREE from 'three';
 import { KYBER_COLORS } from './colors';
 
 /**
- * Representa un mensaje de 256 bits
- * Visualizado como un icosaedro subdividido con puntos emisivos en los vértices
+ * Mensaje de 256 bits visualizado como un icosaedro con puntos emisivos.
+ * Cada vértice representa un bit del mensaje.
  */
 export class MessageSphere extends THREE.Group {
   private sphere!: THREE.Mesh;
@@ -18,9 +18,7 @@ export class MessageSphere extends THREE.Group {
     this.bits = new Array(this.NUM_BITS).fill(false);
     this.createSphere();
     this.createBitPoints();
-
-    // Rotación lenta según especificación
-    this.userData['rotationSpeed'] = (5 * Math.PI) / 180; // 5°/s
+    this.userData['rotationSpeed'] = (5 * Math.PI) / 180;
   }
 
   private createSphere(): void {
@@ -39,11 +37,10 @@ export class MessageSphere extends THREE.Group {
     this.add(this.sphere);
   }
 
+  /** Distribuye 256 puntos uniformemente usando espiral de Fibonacci */
   private createBitPoints(): void {
-    // Distribuir 256 puntos uniformemente en una esfera usando la secuencia de Fibonacci
     const goldenRatio = (1 + Math.sqrt(5)) / 2;
     const angleIncrement = Math.PI * 2 * goldenRatio;
-
     const pointGeometry = new THREE.SphereGeometry(0.3, 8, 8);
 
     for (let i = 0; i < this.NUM_BITS; i++) {
@@ -70,9 +67,6 @@ export class MessageSphere extends THREE.Group {
     }
   }
 
-  /**
-   * Establece los bits del mensaje
-   */
   setBits(bits: boolean[]): void {
     this.bits = bits.slice(0, this.NUM_BITS);
 
@@ -94,9 +88,6 @@ export class MessageSphere extends THREE.Group {
     });
   }
 
-  /**
-   * Genera bits aleatorios
-   */
   generateRandomBits(): void {
     const bits = [];
     for (let i = 0; i < this.NUM_BITS; i++) {
@@ -105,9 +96,7 @@ export class MessageSphere extends THREE.Group {
     this.setBits(bits);
   }
 
-  /**
-   * Anima la generación de bits aleatorios
-   */
+  /** Anima la generación de bits con efecto de parpadeo */
   animateGeneration(duration: number): Promise<void> {
     return new Promise((resolve) => {
       const startTime = Date.now();
@@ -119,7 +108,6 @@ export class MessageSphere extends THREE.Group {
 
         if (elapsed < duration) {
           if (elapsed - lastFlicker > flickerInterval) {
-            // Parpadeo aleatorio
             this.bitPoints.forEach((point) => {
               const isOn = Math.random() > 0.5;
               const material = point.material as THREE.MeshStandardMaterial;
@@ -145,9 +133,6 @@ export class MessageSphere extends THREE.Group {
     });
   }
 
-  /**
-   * Anima la aparición
-   */
   animateAppear(duration: number): Promise<void> {
     return new Promise((resolve) => {
       this.scale.set(0, 0, 0);
@@ -156,8 +141,6 @@ export class MessageSphere extends THREE.Group {
       const animate = () => {
         const elapsed = Date.now() - startTime;
         const progress = Math.min(elapsed / duration, 1);
-
-        // Easing elástico
         const eased = 1 - Math.pow(1 - progress, 4);
         this.scale.setScalar(eased);
 
@@ -172,9 +155,6 @@ export class MessageSphere extends THREE.Group {
     });
   }
 
-  /**
-   * Actualiza la rotación (llamar en el loop de animación)
-   */
   update(delta: number): void {
     this.rotation.y += this.userData['rotationSpeed'] * delta;
   }
@@ -183,10 +163,7 @@ export class MessageSphere extends THREE.Group {
     return this.bits.slice();
   }
 
-  /**
-   * Convierte los bits a un array de coeficientes para encode
-   * Cada bit 1 se mapea a q/2, cada bit 0 a 0
-   */
+  /** Convierte bits a coeficientes codificados: bit 1 -> q/2 */
   toEncodedCoefficients(q = 3329): number[] {
     const halfQ = Math.floor(q / 2);
     return this.bits.map((bit) => (bit ? halfQ : 0));

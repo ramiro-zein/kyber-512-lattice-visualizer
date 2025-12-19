@@ -18,13 +18,12 @@ export interface KyberState {
 }
 
 /**
- * Orquestador de la visualización de CRYSTALS-Kyber
- * Maneja los tres actos: KeyGen, Encaps, Decaps
+ * Orquestador de la visualización de CRYSTALS-Kyber.
+ * Gestiona los tres actos del protocolo: KeyGen, Encaps, Decaps.
  */
 export class KyberOrchestrator {
   private scene: THREE.Scene;
 
-  // Entidades del algoritmo
   private matrixA?: MatrixPolynomial;
   private secretS?: VectorPolynomial;
   private errorE?: VectorPolynomial;
@@ -41,18 +40,14 @@ export class KyberOrchestrator {
   private sharedKeyEmitter?: SharedKeySphere;
   private sharedKeyReceiver?: SharedKeySphere;
 
-  // Zonas de la escena
   private readonly PUBLIC_ZONE = new THREE.Vector3(-100, 0, 50);
   private readonly PRIVATE_ZONE = new THREE.Vector3(100, 0, -100);
   private readonly MESSAGE_ZONE = new THREE.Vector3(0, 150, 0);
   private readonly CIPHER_ZONE = new THREE.Vector3(0, 50, 100);
 
-  // Estado
   private currentPhase: KyberPhase = 'idle';
-  private k = 3; // Kyber-768
+  private k = 3;
   private onStateChange?: (state: KyberState) => void;
-
-  // Animaciones activas
   private activeAnimations: Set<string> = new Set();
 
   constructor(scene: THREE.Scene, k = 3) {
@@ -65,21 +60,14 @@ export class KyberOrchestrator {
   }
 
   private emitState(subPhase: string, progress: number): void {
-    this.onStateChange?.({
-      phase: this.currentPhase,
-      subPhase,
-      progress,
-    });
+    this.onStateChange?.({ phase: this.currentPhase, subPhase, progress });
   }
 
-  /**
-   * ACTO 1: KeyGen - Generación de claves
-   */
+  /** Acto 1: Generación de claves (pk, sk) */
   async runKeyGen(): Promise<void> {
     this.currentPhase = 'keygen';
     this.emitState('Iniciando generación de claves', 0);
 
-    // Escena 1.1: Génesis de A
     this.emitState('Generando matriz pública A', 0.1);
     this.matrixA = new MatrixPolynomial(this.k, KYBER_COLORS.MATRIX_A, 'A');
     this.matrixA.position.set(-50, 0, 0);
@@ -89,7 +77,6 @@ export class KyberOrchestrator {
     this.matrixA.animateGeneration(2000);
     await this.delay(2000);
 
-    // Escena 1.2: Cristalización de s y e
     this.emitState('Generando vector secreto s', 0.3);
     this.secretS = new VectorPolynomial(this.k, KYBER_COLORS.SECRET_S, 's');
     this.secretS.position.set(80, 0, 0);
@@ -105,13 +92,9 @@ export class KyberOrchestrator {
 
     await this.errorE.animateSequentialAppear(400);
     this.errorE.generateSmallCoefficients(2);
-
     await this.delay(1000);
 
-    // Escena 1.3: Cálculo de t = As + e
     this.emitState('Calculando t = A·s + e', 0.5);
-
-    // Crear rayos de operación (visual)
     await this.animateMatrixVectorProduct();
 
     this.vectorT = new VectorPolynomial(this.k, KYBER_COLORS.VECTOR_T, 't');
@@ -119,14 +102,10 @@ export class KyberOrchestrator {
     this.scene.add(this.vectorT);
 
     await this.vectorT.animateSequentialAppear(400);
-    this.vectorT.generateRandomCoefficients(); // Simular resultado
-
+    this.vectorT.generateRandomCoefficients();
     await this.delay(1000);
 
-    // Escena 1.4: Separación de claves
     this.emitState('Separando claves pública y privada', 0.8);
-
-    // Mover A y t a zona pública
     await Promise.all([
       this.matrixA.animateMoveTo(this.PUBLIC_ZONE, 2000),
       this.vectorT.animateMoveTo(
@@ -135,23 +114,17 @@ export class KyberOrchestrator {
       ),
     ]);
 
-    // Mover s a zona privada (ocultar e ya que no se guarda)
     await this.secretS.animateMoveTo(this.PRIVATE_ZONE, 2000);
-
-    // Desvanecer e
     await this.fadeOutEntity(this.errorE, 1000);
     this.scene.remove(this.errorE);
     this.errorE = undefined;
 
     this.emitState('Claves generadas: pk=(A,t), sk=s', 1);
     await this.delay(1000);
-
     this.currentPhase = 'idle';
   }
 
-  /**
-   * ACTO 2: Encaps - Encapsulamiento
-   */
+  /** Acto 2: Encapsulamiento - genera ciphertext y clave compartida */
   async runEncaps(): Promise<void> {
     if (!this.matrixA || !this.vectorT) {
       console.error('Debe ejecutar KeyGen primero');
@@ -161,7 +134,6 @@ export class KyberOrchestrator {
     this.currentPhase = 'encaps';
     this.emitState('Iniciando encapsulamiento', 0);
 
-    // Escena 2.1: Generación de mensaje m
     this.emitState('Generando mensaje aleatorio m', 0.1);
     this.messageSphere = new MessageSphere();
     this.messageSphere.position.copy(this.MESSAGE_ZONE);
@@ -170,8 +142,7 @@ export class KyberOrchestrator {
     await this.messageSphere.animateAppear(1000);
     await this.messageSphere.animateGeneration(1500);
 
-    // Generar vectores efímeros
-    this.emitState('Derivando vectores efímeros r, e₁, e₂', 0.2);
+    this.emitState('Derivando vectores efímeros r, e1, e2', 0.2);
 
     this.ephemeralR = new VectorPolynomial(this.k, KYBER_COLORS.EPHEMERAL_R, 'r');
     this.ephemeralR.position.set(0, 100, 50);
@@ -179,22 +150,20 @@ export class KyberOrchestrator {
     await this.ephemeralR.animateSequentialAppear(300);
     this.ephemeralR.generateSmallCoefficients(2);
 
-    this.error1 = new VectorPolynomial(this.k, KYBER_COLORS.ERROR_E, 'e₁');
+    this.error1 = new VectorPolynomial(this.k, KYBER_COLORS.ERROR_E, 'e1');
     this.error1.position.set(-50, 100, 50);
     this.scene.add(this.error1);
     await this.error1.animateSequentialAppear(300);
     this.error1.generateSmallCoefficients(2);
 
-    this.error2 = new TorusPolynomial(KYBER_COLORS.ERROR_E, 'e₂');
+    this.error2 = new TorusPolynomial(KYBER_COLORS.ERROR_E, 'e2');
     this.error2.position.set(50, 100, 50);
     this.scene.add(this.error2);
     await this.error2.animateAppear(500);
     this.error2.generateSmallCoefficients(2);
-
     await this.delay(1000);
 
-    // Escena 2.2: Cálculo de u = Aᵀr + e₁
-    this.emitState('Calculando u = Aᵀ·r + e₁', 0.4);
+    this.emitState('Calculando u = A^T·r + e1', 0.4);
     await this.matrixA.animateTranspose(1000);
 
     this.vectorU = new VectorPolynomial(this.k, KYBER_COLORS.CIPHERTEXT, 'u');
@@ -202,49 +171,38 @@ export class KyberOrchestrator {
     this.scene.add(this.vectorU);
     await this.vectorU.animateSequentialAppear(400);
     this.vectorU.generateRandomCoefficients();
-
     await this.delay(500);
 
-    // Escena 2.3: Cálculo de v = tᵀr + e₂ + encode(m)
-    this.emitState('Calculando v = tᵀ·r + e₂ + encode(m)', 0.6);
-
+    this.emitState('Calculando v = t^T·r + e2 + encode(m)', 0.6);
     this.torusV = new TorusPolynomial(KYBER_COLORS.CIPHERTEXT, 'v');
     this.torusV.position.set(50, 50, 0);
     this.scene.add(this.torusV);
     await this.torusV.animateAppear(500);
     this.torusV.generateRandomCoefficients();
-
     await this.delay(500);
 
-    // Escena 2.4: Encapsulamiento final
     this.emitState('Encapsulando cifrado (u, v)', 0.8);
-
     this.cipherCapsule = new CipherCapsule();
     this.cipherCapsule.position.copy(this.CIPHER_ZONE);
     this.scene.add(this.cipherCapsule);
     await this.cipherCapsule.animateAppear(1000);
 
-    // Mover u y v dentro de la cápsula
     await Promise.all([
       this.vectorU.animateMoveTo(this.CIPHER_ZONE, 1000),
       this.animateTorusMoveTo(this.torusV, this.CIPHER_ZONE, 1000),
     ]);
 
-    // Reparentar u y v a la cápsula
     this.scene.remove(this.vectorU);
     this.scene.remove(this.torusV);
     this.cipherCapsule.setContent(this.vectorU, this.torusV);
-
     await this.cipherCapsule.animateSeal(1000);
 
-    // Generar clave compartida
     this.emitState('Derivando clave compartida K', 0.9);
     this.sharedKeyEmitter = new SharedKeySphere();
     this.sharedKeyEmitter.position.set(-50, 80, 100);
     this.scene.add(this.sharedKeyEmitter);
     await this.sharedKeyEmitter.animateAppear(1000);
 
-    // Limpiar elementos temporales
     await this.fadeOutEntity(this.ephemeralR, 500);
     await this.fadeOutEntity(this.error1, 500);
     await this.fadeOutEntity(this.error2, 500);
@@ -252,20 +210,16 @@ export class KyberOrchestrator {
     this.scene.remove(this.ephemeralR);
     this.scene.remove(this.error1);
     this.scene.remove(this.error2);
-
     this.ephemeralR = undefined;
     this.error1 = undefined;
     this.error2 = undefined;
 
     this.emitState('Cifrado completado: c=(u,v), K derivada', 1);
     await this.delay(1000);
-
     this.currentPhase = 'idle';
   }
 
-  /**
-   * ACTO 3: Decaps - Decapsulamiento
-   */
+  /** Acto 3: Decapsulamiento - recupera la clave compartida */
   async runDecaps(): Promise<void> {
     if (!this.cipherCapsule || !this.secretS) {
       console.error('Debe ejecutar Encaps primero');
@@ -275,58 +229,38 @@ export class KyberOrchestrator {
     this.currentPhase = 'decaps';
     this.emitState('Iniciando decapsulamiento', 0);
 
-    // Escena 3.1: Recepción y apertura
     this.emitState('Recibiendo y abriendo cápsula', 0.1);
-
-    // Mover cápsula al centro
     await this.cipherCapsule.animateMoveTo(new THREE.Vector3(0, 50, 0), 1500);
     await this.cipherCapsule.animateOpen(1000);
 
-    // Extraer u y v
-    const extractedU = this.cipherCapsule.getVectorU();
-    const extractedV = this.cipherCapsule.getTorusV();
-
-    // Mover secreto s al frente
     await this.secretS.animateMoveTo(new THREE.Vector3(80, 50, 0), 1000);
-
     await this.delay(500);
 
-    // Escena 3.2: Cálculo de sᵀu
-    this.emitState('Calculando sᵀ·u', 0.3);
+    this.emitState('Calculando s^T·u', 0.3);
     await this.animateSecretOperation();
-
     await this.delay(500);
 
-    // Escena 3.3: Recuperación del mensaje
-    this.emitState('Recuperando mensaje m\' = decode(v - sᵀ·u)', 0.5);
-
+    this.emitState("Recuperando mensaje m' = decode(v - s^T·u)", 0.5);
     const recoveredMessage = new MessageSphere();
     recoveredMessage.position.set(0, 120, 0);
     this.scene.add(recoveredMessage);
     await recoveredMessage.animateAppear(1000);
 
-    // Copiar bits del mensaje original (simular recuperación exitosa)
     if (this.messageSphere) {
       recoveredMessage.setBits(this.messageSphere.getBits());
     }
-
     await this.delay(1000);
 
-    // Escena 3.4: Verificación FO
     this.emitState('Verificando integridad (Fujisaki-Okamoto)', 0.7);
     await this.animateVerification(true);
-
     await this.delay(500);
 
-    // Escena 3.5: Derivación de K
     this.emitState('Derivando clave compartida K', 0.9);
-
     this.sharedKeyReceiver = new SharedKeySphere();
     this.sharedKeyReceiver.position.set(50, 80, 100);
     this.scene.add(this.sharedKeyReceiver);
     await this.sharedKeyReceiver.animateAppear(1000);
 
-    // Mostrar que las claves son iguales
     if (this.sharedKeyEmitter) {
       const connection = this.sharedKeyEmitter.createConnectionTo(this.sharedKeyReceiver);
       this.scene.add(connection);
@@ -334,13 +268,9 @@ export class KyberOrchestrator {
 
     this.emitState('Clave compartida establecida - Comunicación segura', 1);
     await this.delay(1000);
-
     this.currentPhase = 'complete';
   }
 
-  /**
-   * Ejecuta la demostración completa
-   */
   async runFullDemo(): Promise<void> {
     await this.runKeyGen();
     await this.delay(1000);
@@ -349,34 +279,17 @@ export class KyberOrchestrator {
     await this.runDecaps();
   }
 
-  /**
-   * Reinicia la escena
-   */
   reset(): void {
-    // Remover todas las entidades
     const entitiesToRemove = [
-      this.matrixA,
-      this.secretS,
-      this.errorE,
-      this.vectorT,
-      this.ephemeralR,
-      this.error1,
-      this.error2,
-      this.vectorU,
-      this.torusV,
-      this.messageSphere,
-      this.cipherCapsule,
-      this.sharedKeyEmitter,
-      this.sharedKeyReceiver,
+      this.matrixA, this.secretS, this.errorE, this.vectorT,
+      this.ephemeralR, this.error1, this.error2, this.vectorU, this.torusV,
+      this.messageSphere, this.cipherCapsule, this.sharedKeyEmitter, this.sharedKeyReceiver,
     ];
 
     entitiesToRemove.forEach((entity) => {
-      if (entity) {
-        this.scene.remove(entity);
-      }
+      if (entity) this.scene.remove(entity);
     });
 
-    // Limpiar referencias
     this.matrixA = undefined;
     this.secretS = undefined;
     this.errorE = undefined;
@@ -395,9 +308,6 @@ export class KyberOrchestrator {
     this.emitState('Escena reiniciada', 0);
   }
 
-  /**
-   * Actualiza las animaciones continuas
-   */
   update(delta: number, elapsed: number): void {
     this.messageSphere?.update(delta);
     this.cipherCapsule?.update(delta);
@@ -405,14 +315,12 @@ export class KyberOrchestrator {
     this.sharedKeyReceiver?.update(delta, elapsed);
   }
 
-  // --- Métodos auxiliares de animación ---
-
   private delay(ms: number): Promise<void> {
     return new Promise((resolve) => setTimeout(resolve, ms));
   }
 
+  /** Visualiza el producto matriz-vector A·s con rayos */
   private async animateMatrixVectorProduct(): Promise<void> {
-    // Visualización simplificada de A·s
     if (!this.matrixA || !this.secretS) return;
 
     const rays: THREE.Line[] = [];
@@ -422,7 +330,6 @@ export class KyberOrchestrator {
       opacity: 0.8,
     });
 
-    // Crear rayos desde cada elemento de A hacia s
     for (let i = 0; i < this.k; i++) {
       const row = this.matrixA.getRow(i);
       const sTori = this.secretS.getTori();
@@ -430,23 +337,19 @@ export class KyberOrchestrator {
       for (let j = 0; j < this.k; j++) {
         const startPos = new THREE.Vector3();
         const endPos = new THREE.Vector3();
-
         row[j].getWorldPosition(startPos);
         sTori[j].getWorldPosition(endPos);
 
         const points = [startPos, endPos];
         const geometry = new THREE.BufferGeometry().setFromPoints(points);
         const ray = new THREE.Line(geometry, rayMaterial.clone());
-
         rays.push(ray);
         this.scene.add(ray);
       }
     }
 
-    // Animar los rayos
     await this.delay(1500);
 
-    // Desvanecer rayos
     for (const ray of rays) {
       const material = ray.material as THREE.LineBasicMaterial;
       const startOpacity = material.opacity;
@@ -473,10 +376,8 @@ export class KyberOrchestrator {
   }
 
   private async animateSecretOperation(): Promise<void> {
-    // Animación de operación con el secreto
     if (!this.secretS) return;
 
-    // Efecto de brillo en s
     const tori = this.secretS.getTori();
     for (const torus of tori) {
       await torus.transitionColor(new THREE.Color(0xff4444), 300);
@@ -485,10 +386,8 @@ export class KyberOrchestrator {
   }
 
   private async animateVerification(success: boolean): Promise<void> {
-    // Animación de verificación
     const color = success ? KYBER_COLORS.SUCCESS : KYBER_COLORS.FAILURE;
 
-    // Crear esfera de verificación
     const geometry = new THREE.SphereGeometry(5, 32, 32);
     const material = new THREE.MeshBasicMaterial({
       color: color,
@@ -500,7 +399,6 @@ export class KyberOrchestrator {
     verificationSphere.position.set(0, 80, 0);
     this.scene.add(verificationSphere);
 
-    // Animar aparición
     await new Promise<void>((resolve) => {
       const startTime = Date.now();
       const duration = 800;
@@ -522,8 +420,6 @@ export class KyberOrchestrator {
     });
 
     await this.delay(1000);
-
-    // Desvanecer
     await this.fadeOutEntity(verificationSphere, 500);
     this.scene.remove(verificationSphere);
   }

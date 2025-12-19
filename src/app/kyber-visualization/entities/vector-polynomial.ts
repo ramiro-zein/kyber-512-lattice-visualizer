@@ -3,8 +3,8 @@ import { TorusPolynomial } from './torus-polynomial';
 import { KYBER_COLORS, createEmissiveMaterial } from './colors';
 
 /**
- * Representa un vector de k polinomios en Rq^k
- * Visualizado como una torre de k toros apilados verticalmente
+ * Vector de k polinomios en R_q^k.
+ * Visualizado como una torre de k toros apilados verticalmente.
  */
 export class VectorPolynomial extends THREE.Group {
   private tori: TorusPolynomial[] = [];
@@ -32,8 +32,8 @@ export class VectorPolynomial extends THREE.Group {
     }
   }
 
+  /** Crea la plataforma hexagonal base */
   private createPlatform(): void {
-    // Plataforma hexagonal según especificación
     const shape = new THREE.Shape();
     const sides = 6;
     const radius = this.PLATFORM_RADIUS;
@@ -72,6 +72,7 @@ export class VectorPolynomial extends THREE.Group {
     this.add(this.platform);
   }
 
+  /** Crea los k toros apilados */
   private createTori(): void {
     for (let i = 0; i < this.k; i++) {
       const torus = new TorusPolynomial(this.baseColor, `${this.label}[${i}]`);
@@ -81,6 +82,7 @@ export class VectorPolynomial extends THREE.Group {
     }
   }
 
+  /** Crea los conectores cilíndricos entre toros */
   private createConnectors(): void {
     const connectorGeometry = new THREE.CylinderGeometry(1, 1, this.TORUS_SEPARATION - 16, 16);
     const connectorMaterial = createEmissiveMaterial(this.baseColor, 0.4);
@@ -101,7 +103,6 @@ export class VectorPolynomial extends THREE.Group {
 
     context.fillStyle = 'transparent';
     context.fillRect(0, 0, canvas.width, canvas.height);
-
     context.font = 'bold 32px JetBrains Mono, Fira Code, monospace';
     context.fillStyle = '#ffffff';
     context.textAlign = 'center';
@@ -109,20 +110,13 @@ export class VectorPolynomial extends THREE.Group {
     context.fillText(this.label, canvas.width / 2, canvas.height / 2);
 
     const texture = new THREE.CanvasTexture(canvas);
-    const spriteMaterial = new THREE.SpriteMaterial({
-      map: texture,
-      transparent: true,
-    });
-
+    const spriteMaterial = new THREE.SpriteMaterial({ map: texture, transparent: true });
     this.labelSprite = new THREE.Sprite(spriteMaterial);
     this.labelSprite.scale.set(30, 7.5, 1);
     this.labelSprite.position.y = this.k * this.TORUS_SEPARATION + 15;
     this.add(this.labelSprite);
   }
 
-  /**
-   * Establece los coeficientes para cada polinomio del vector
-   */
   setCoefficients(coefficients: number[][]): void {
     coefficients.forEach((coeffs, i) => {
       if (this.tori[i]) {
@@ -131,23 +125,15 @@ export class VectorPolynomial extends THREE.Group {
     });
   }
 
-  /**
-   * Genera coeficientes aleatorios para todos los polinomios
-   */
   generateRandomCoefficients(): void {
     this.tori.forEach((torus) => torus.generateRandomCoefficients());
   }
 
-  /**
-   * Genera coeficientes pequeños (para secreto s o errores e)
-   */
+  /** Genera coeficientes pequeños para secreto s o errores e */
   generateSmallCoefficients(eta = 2): void {
     this.tori.forEach((torus) => torus.generateSmallCoefficients(eta));
   }
 
-  /**
-   * Anima la aparición de la torre
-   */
   async animateAppear(duration: number): Promise<void> {
     this.scale.set(0, 0, 0);
 
@@ -157,8 +143,6 @@ export class VectorPolynomial extends THREE.Group {
       const animate = () => {
         const elapsed = Date.now() - startTime;
         const progress = Math.min(elapsed / duration, 1);
-
-        // Easing elástico
         const eased = 1 - Math.pow(1 - progress, 3);
         this.scale.setScalar(eased);
 
@@ -173,19 +157,13 @@ export class VectorPolynomial extends THREE.Group {
     });
   }
 
-  /**
-   * Anima la aparición secuencial de cada toro
-   */
+  /** Anima la aparición secuencial de cada toro */
   async animateSequentialAppear(torusDuration: number): Promise<void> {
-    // Primero ocultar todos
     this.tori.forEach((torus) => torus.scale.set(0, 0, 0));
     this.connectors.forEach((conn) => conn.scale.set(0, 0, 0));
 
-    // Aparecer secuencialmente
     for (let i = 0; i < this.tori.length; i++) {
       await this.tori[i].animateAppear(torusDuration);
-
-      // Aparecer conector después del toro (excepto el último)
       if (i < this.connectors.length) {
         await this.animateConnector(this.connectors[i], torusDuration / 2);
       }
@@ -212,13 +190,9 @@ export class VectorPolynomial extends THREE.Group {
     });
   }
 
-  /**
-   * Transición de color para todo el vector
-   */
   async transitionColor(newColor: THREE.Color, duration: number): Promise<void> {
     const promises = this.tori.map((torus) => torus.transitionColor(newColor, duration));
 
-    // También cambiar conectores
     this.connectors.forEach((connector) => {
       const material = connector.material as THREE.MeshStandardMaterial;
       const startColor = material.color.clone();
@@ -241,9 +215,6 @@ export class VectorPolynomial extends THREE.Group {
     await Promise.all(promises);
   }
 
-  /**
-   * Mueve el vector a una nueva posición con animación
-   */
   animateMoveTo(
     targetPosition: THREE.Vector3,
     duration: number,
