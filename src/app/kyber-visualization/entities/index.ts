@@ -1,3 +1,4 @@
+export * from './kyber-constants';
 export * from './colors';
 export * from './torus-polynomial';
 export * from './vector-polynomial';
