@@ -49,9 +49,6 @@ export class SceneService {
     // Iluminación según especificación
     this.setupLighting();
 
-    // Partículas ambientales
-    this.createAmbientParticles();
-
     // Iniciar loop de animación
     this.startAnimationLoop();
   }
@@ -77,48 +74,6 @@ export class SceneService {
     const redLight = new THREE.PointLight(0x8b0000, 0.3, 400);
     redLight.position.set(100, 50, -200);
     this.scene.add(redLight);
-  }
-
-  private createAmbientParticles(): void {
-    const particleCount = 2000;
-    const geometry = new THREE.BufferGeometry();
-    const positions = new Float32Array(particleCount * 3);
-    const colors = new Float32Array(particleCount * 3);
-
-    for (let i = 0; i < particleCount; i++) {
-      positions[i * 3] = (Math.random() - 0.5) * 800;
-      positions[i * 3 + 1] = (Math.random() - 0.5) * 600;
-      positions[i * 3 + 2] = (Math.random() - 0.5) * 800;
-
-      // Color azulado tenue
-      colors[i * 3] = 0.3 + Math.random() * 0.2;
-      colors[i * 3 + 1] = 0.4 + Math.random() * 0.3;
-      colors[i * 3 + 2] = 0.8 + Math.random() * 0.2;
-    }
-
-    geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-    geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
-
-    const material = new THREE.PointsMaterial({
-      size: 0.5,
-      vertexColors: true,
-      transparent: true,
-      opacity: 0.6,
-      blending: THREE.AdditiveBlending,
-    });
-
-    const particles = new THREE.Points(geometry, material);
-    particles.name = 'ambientParticles';
-    this.scene.add(particles);
-
-    // Animación de deriva lenta
-    this.addAnimationCallback((delta) => {
-      const positions = geometry.attributes['position'].array as Float32Array;
-      for (let i = 0; i < particleCount; i++) {
-        positions[i * 3 + 1] += Math.sin(Date.now() * 0.0001 + i) * 0.02;
-      }
-      geometry.attributes['position'].needsUpdate = true;
-    });
   }
 
   private startAnimationLoop(): void {
