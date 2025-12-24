@@ -8,7 +8,7 @@ import { LogService } from './services/log.service';
  */
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet, KyberVisualizationComponent],
+  imports: [RouterOutlet],
   templateUrl: './app.html',
   styleUrl: './app.scss',
 })
