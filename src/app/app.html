@@ -47,30 +47,21 @@
     </div>
   </div>
 
-  <!-- Controls -->
-  <div class="pointer-events-auto z-10 w-full flex flex-col items-center gap-4 mb-4 md:mb-0">
-
-    <!-- Camera Controls -->
-    <div
-      class="panel p-3 md:p-4 flex flex-wrap md:flex-nowrap items-center justify-center gap-3 md:gap-4 shadow-xl max-w-full bg-slate-900/80"
-    >
-      <div class="text-center w-full md:w-auto mb-1 md:mb-0">
-        <span class="block text-[9px] text-slate-400 uppercase tracking-widest font-bold">
-          Controles de Cámara
-        </span>
-      </div>
-
-      <button
-        (click)="toggleAutoRotate()"
-        [class.bg-fuchsia-900/40]="autoRotateEnabled"
-        [class.border-fuchsia-600]="autoRotateEnabled"
-        [class.text-fuchsia-300]="autoRotateEnabled"
-        class="btn text-xs px-3 py-1.5 hover:text-fuchsia-300 border-slate-600 transition-all"
-      >
-        {{ autoRotateEnabled ? 'Detener Rotación' : 'Auto-Rotar' }}
-      </button>
+  <!-- Activity Log Panel -->
+  <div class="activity-log">
+    <div class="log-header">
+      <span class="log-title">Activity Log</span>
+      <button class="log-clear" (click)="clearLogs()">Limpiar</button>
     </div>
-
+    <div class="log-entries" #logContainer>
+      @for (log of logService.logs(); track log.timestamp) {
+        <div class="log-entry" [class]="'log-' + log.type">
+          <span class="log-time">{{ formatTime(log.timestamp) }}</span>
+          <span class="log-message">{{ log.message }}</span>
+        </div>
+      }
+    </div>
   </div>
+</main>
 
-</div>
+<router-outlet />
