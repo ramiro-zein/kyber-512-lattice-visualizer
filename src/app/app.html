@@ -1,23 +1,18 @@
-<main class="main">
-  <div class="content">
-    hola
-  </div>
-
-  <!-- Activity Log Panel -->
-  <div class="activity-log">
-    <div class="log-header">
-      <span class="log-title">Activity Log</span>
-      <button class="log-clear" (click)="clearLogs()">Limpiar</button>
-    </div>
-    <div class="log-entries" #logContainer>
-      @for (log of logService.logs(); track log.timestamp) {
-        <div class="log-entry" [class]="'log-' + log.type">
-          <span class="log-time">{{ formatTime(log.timestamp) }}</span>
-          <span class="log-message">{{ log.message }}</span>
-        </div>
-      }
-    </div>
-  </div>
-</main>
-
+<!-- Router Outlet para la visualización Kyber -->
 <router-outlet />
+
+<!-- Activity Log Panel (siempre visible) -->
+<div class="activity-log">
+  <div class="log-header">
+    <span class="log-title">Activity Log</span>
+    <button class="log-clear" (click)="clearLogs()">Limpiar</button>
+  </div>
+  <div class="log-entries" #logContainer>
+    @for (log of logService.logs(); track log.timestamp) {
+      <div class="log-entry" [class]="'log-' + log.type">
+        <span class="log-time">{{ formatTime(log.timestamp) }}</span>
+        <span class="log-message">{{ log.message }}</span>
+      </div>
+    }
+  </div>
+</div>

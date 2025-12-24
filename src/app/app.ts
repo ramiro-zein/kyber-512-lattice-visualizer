@@ -2,11 +2,15 @@ import { Component, inject, signal } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { LogService } from './services/log.service';
 
+/**
+ * Main application component for professional 3D visualization
+ * Clean 3D environment ready for custom content
+ */
 @Component({
   selector: 'app-root',
   imports: [RouterOutlet],
   templateUrl: './app.html',
-  styleUrl: './app.scss'
+  styleUrl: './app.scss',
 })
 export class App {
   protected readonly title = signal('modelo-cifrado');

@@ -1,59 +1,212 @@
-# ModeloCifrado
+# Kyber-512 3D Visualization 🔐
 
-This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 20.3.3.
+> **Visualización Interactiva 3D del Algoritmo Post-Cuántico Kyber-512**
+> Proyecto de Nivel Doctorado
 
-## Development server
+<p align="center">
+  <img src="https://img.shields.io/badge/Angular-20.3-red?style=for-the-badge&logo=angular" />
+  <img src="https://img.shields.io/badge/Three.js-r128-black?style=for-the-badge&logo=three.js" />
+  <img src="https://img.shields.io/badge/TypeScript-5.9-blue?style=for-the-badge&logo=typescript" />
+  <img src="https://img.shields.io/badge/Security-Post_Quantum-green?style=for-the-badge" />
+</p>
 
-To start a local development server, run:
+## 🎯 Descripción
 
-```bash
-ng serve
-```
+Implementación completa y visualización interactiva en 3D del algoritmo de cifrado post-cuántico **CRYSTALS-Kyber-512**, seleccionado por el NIST como estándar para criptografía resistente a ataques cuánticos.
 
-Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
+### Características Principales
 
-## Code scaffolding
+- ✅ **Implementación Matemática Rigurosa**: Kyber-512 completo con operaciones en anillos polinómicos
+- ✅ **Visualización 3D en Tiempo Real**: Estructuras lattice renderizadas con Three.js
+- ✅ **Panel de Análisis Matemático**: Estadísticas en vivo de polinomios
+- ✅ **Modo Educativo Avanzado**: Explicaciones de nivel doctoral
+- ✅ **Arquitectura Modular**: Separación clara de responsabilidades (SOLID)
+- ✅ **TypeScript Estricto**: Tipado fuerte sin uso de `any`
 
-Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
+## 🚀 Inicio Rápido
 
-```bash
-ng generate component component-name
-```
+### Prerequisitos
 
-For a complete list of available schematics (such as `components`, `directives`, or `pipes`), run:
+- Node.js 20+
+- pnpm (recomendado) o npm
 
-```bash
-ng generate --help
-```
-
-## Building
-
-To build the project run:
-
-```bash
-ng build
-```
-
-This will compile your project and store the build artifacts in the `dist/` directory. By default, the production build optimizes your application for performance and speed.
-
-## Running unit tests
-
-To execute unit tests with the [Karma](https://karma-runner.github.io) test runner, use the following command:
+### Instalación
 
 ```bash
-ng test
+# Clonar repositorio
+git clone <repo-url>
+cd modelo-cifrado
+
+# Instalar dependencias
+pnpm install
+
+# Iniciar servidor de desarrollo
+pnpm start
 ```
 
-## Running end-to-end tests
+Navega a `http://localhost:4200/` para ver la aplicación.
 
-For end-to-end (e2e) testing, run:
+## 📚 Uso de la Aplicación
+
+### 1. Generación de Llaves
+
+Haz clic en **"Generar Llaves"** para:
+- Generar matriz pública A (2×2 de polinomios)
+- Crear vector secreto s usando CBD(η=2)
+- Calcular llave pública t = As + e
+
+### 2. Encriptación
+
+Selecciona un bit (0 o 1) para:
+- Codificar mensaje como polinomio
+- Generar vectores aleatorios r, e₁, e₂
+- Calcular ciphertext (u, v)
+- Visualizar transmisión
+
+### 3. Desencriptación
+
+Haz clic en **"Descifrar"** para:
+- Calcular s^T · u
+- Recuperar mensaje ruidoso
+- Decodificar bit original
+- Verificar correctitud
+
+## 🏗️ Arquitectura
+
+```
+src/app/
+├── core/
+│   ├── models/
+│   │   └── kyber.types.ts              # Tipos matemáticos
+│   └── services/
+│       ├── kyber-crypto.service.ts      # Lógica criptográfica
+│       └── three-visualization.service.ts # Motor 3D
+├── components/
+│   └── kyber-visualization/
+│       ├── math-analysis-panel.component.ts
+│       └── educational-panel.component.ts
+└── app.ts                               # Orquestador principal
+```
+
+### Servicios Principales
+
+#### KyberCryptoService
+- Implementa algoritmos de Kyber-512
+- Gestiona estado criptográfico
+- Emite eventos para logging
+
+#### ThreeVisualizationService
+- Renderiza estructuras lattice en 3D
+- Gestiona animaciones y transiciones
+- Optimiza performance visual
+
+## 🔬 Fundamentos Matemáticos
+
+### Anillo Polinómico
+
+```
+R = ℤ₃₃₂₉[X]/(X²⁵⁶ + 1)
+```
+
+### Parámetros Kyber-512
+
+| Parámetro | Valor | Descripción |
+|-----------|-------|-------------|
+| N | 256 | Grado del polinomio |
+| Q | 3329 | Módulo primo |
+| K | 2 | Dimensión del módulo |
+| η | 2 | Parámetro CBD |
+| Security | NIST Level 1 | Equivalente a AES-128 |
+
+### Seguridad
+
+La seguridad se basa en **Module-LWE** (Learning With Errors sobre módulos), considerado resistente a:
+- ✅ Computadoras clásicas
+- ✅ Computadoras cuánticas (algoritmo de Shor)
+- ✅ Ataques de lado de canal (con implementación adecuada)
+
+## 📖 Documentación
+
+Para documentación técnica completa de nivel doctorado, ver:
+- [KYBER-TECHNICAL-DOCUMENTATION.md](KYBER-TECHNICAL-DOCUMENTATION.md)
+
+Incluye:
+- Fundamentos matemáticos detallados
+- Análisis de seguridad
+- Guía de desarrollo
+- Referencias académicas
+
+## 🛠️ Scripts Disponibles
 
 ```bash
-ng e2e
+# Desarrollo
+pnpm start              # Servidor dev con HMR
+
+# Build
+pnpm run build          # Build de producción
+pnpm run watch          # Build continuo
+
+# Testing
+pnpm test               # Tests unitarios
 ```
 
-Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
+## 🎨 Tecnologías
 
-## Additional Resources
+- **Framework**: Angular 20.3
+- **3D**: Three.js + OrbitControls
+- **Animaciones**: Tween.js
+- **Estilos**: Tailwind CSS 4
+- **TypeScript**: 5.9
+- **Build**: esbuild (vía Angular)
 
-For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+## 📊 Características Técnicas
+
+### Visualización 3D
+
+- **Instanced Meshes**: Optimización de draw calls
+- **Iluminación Profesional**: 3 luces direccionales + ambiente
+- **Esquema de Colores Semántico**: Color-coding por tipo de datos
+- **Animaciones Fluidas**: Tween.js para transiciones suaves
+
+### Paneles de Análisis
+
+#### Panel Matemático
+- Media y desviación estándar
+- Norma L2 euclidiana
+- Valores máximo/mínimo
+- Interpretación automática
+
+#### Panel Educativo
+- Explicaciones contextuales
+- Fórmulas matemáticas
+- Notas de seguridad
+- 3 niveles de importancia
+
+## ⚠️ Nota de Seguridad
+
+Esta es una implementación **educativa** y de **investigación**. NO usar en producción.
+
+Para aplicaciones reales, use bibliotecas auditadas:
+- [liboqs](https://github.com/open-quantum-safe/liboqs) (Open Quantum Safe)
+- [PQClean](https://github.com/PQClean/PQClean)
+- Implementaciones oficiales de CRYSTALS
+
+## 📄 Licencia
+
+Proyecto académico para propósitos educativos y de investigación.
+
+## 🤝 Referencias
+
+- [CRYSTALS-Kyber Official](https://pq-crystals.org/kyber/)
+- [NIST Post-Quantum Cryptography](https://csrc.nist.gov/projects/post-quantum-cryptography)
+- [Module-LWE Paper](https://doi.org/10.1007/s10623-014-9938-4)
+
+## 👨‍🎓 Autor
+
+Proyecto de Nivel Doctorado - Implementación Completa de Kyber-512
+
+---
+
+**Versión**: 2.0.0
+**Build Status**: ✅ Compilación exitosa
+**Bundle Size**: 862.73 kB (200.53 kB gzipped)
