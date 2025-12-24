@@ -23,7 +23,7 @@ export class MatrixPolynomial extends THREE.Group {
     this.label = label;
 
     this.createToriGrid();
-    this.createWireframe();
+    // this.createWireframe(); // Disabled for minimalist design
     this.createLabel();
   }
 

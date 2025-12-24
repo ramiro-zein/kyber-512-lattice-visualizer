@@ -27,8 +27,8 @@ import { KyberOrchestrator, KyberState } from './animations/kyber-orchestrator';
 
       <div class="overlay">
         <div class="title">
-          <h1>CRYSTALS-Kyber</h1>
-          <p class="subtitle">Visualizacion 3D del cifrado post-cuantico</p>
+          <h1>Modelo 3D</h1>
+          <p class="subtitle">CRYSTALS-Kyber</p>
         </div>
 
         <div class="status-panel">
@@ -100,7 +100,6 @@ import { KyberOrchestrator, KyberState } from './animations/kyber-orchestrator';
         <div class="info-panel">
           <p><strong>Rq = Zq[X]/(X^256+1)</strong>, q=3329</p>
           <p>Kyber-768 (k=3)</p>
-          <p>Usa el mouse para rotar la vista</p>
         </div>
       </div>
     </div>
@@ -111,7 +110,7 @@ import { KyberOrchestrator, KyberState } from './animations/kyber-orchestrator';
       height: 100vh;
       position: relative;
       overflow: hidden;
-      background: linear-gradient(135deg, #000a14 0%, #001133 100%);
+      background: #000000;
     }
 
     canvas {
@@ -136,65 +135,60 @@ import { KyberOrchestrator, KyberState } from './animations/kyber-orchestrator';
       text-align: center;
       color: white;
       margin-bottom: 20px;
+      margin-top: 10px;
     }
 
     .title h1 {
       font-family: 'Consolas', 'Monaco', monospace;
-      font-size: 2rem;
+      font-size: 1.8rem;
       margin: 0;
-      color: #e8e8e8;
-      font-weight: 400;
-      letter-spacing: 2px;
+      color: #ddd;
+      font-weight: 300;
+      letter-spacing: 3px;
     }
 
     .subtitle {
-      font-size: 1rem;
-      opacity: 0.7;
-      margin-top: 5px;
+      font-size: 0.85rem;
+      opacity: 0.5;
+      margin-top: 6px;
+      font-weight: 300;
     }
 
     .status-panel {
       position: absolute;
-      top: 90px;
+      top: 100px;
       left: 50%;
       transform: translateX(-50%);
-      background: rgba(20, 24, 32, 0.92);
-      padding: 14px 28px;
-      border-radius: 4px;
-      border: 1px solid rgba(255, 255, 255, 0.08);
+      background: rgba(15, 20, 25, 0.85);
+      padding: 16px 32px;
+      border-radius: 2px;
+      border: 1px solid rgba(255, 255, 255, 0.05);
       text-align: center;
-      min-width: 320px;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+      min-width: 300px;
+      box-shadow: none;
     }
 
     .phase {
       font-family: 'Consolas', 'Monaco', monospace;
-      font-size: 1rem;
-      color: #70a0c0;
-      font-weight: 500;
-      letter-spacing: 1px;
+      font-size: 0.9rem;
+      color: #888;
+      font-weight: 400;
+      letter-spacing: 2px;
     }
 
     .sub-phase {
-      color: #909090;
-      font-size: 0.8rem;
-      margin-top: 6px;
+      color: #666;
+      font-size: 0.75rem;
+      margin-top: 4px;
       font-family: 'Consolas', monospace;
     }
 
     .progress-bar {
-      width: 100%;
-      height: 3px;
-      background: rgba(255, 255, 255, 0.1);
-      border-radius: 1px;
-      margin-top: 10px;
-      overflow: hidden;
+      display: none;
     }
 
     .progress-fill {
-      height: 100%;
-      background: linear-gradient(90deg, #4080a0, #60a080);
-      transition: width 0.3s ease;
+      display: none;
     }
 
     .controls {
@@ -209,49 +203,57 @@ import { KyberOrchestrator, KyberState } from './animations/kyber-orchestrator';
 
     .controls button {
       font-family: 'Consolas', 'Monaco', monospace;
-      padding: 10px 20px;
-      font-size: 0.9rem;
-      font-weight: 500;
-      letter-spacing: 0.5px;
-      border: none;
-      border-radius: 4px;
+      padding: 12px 24px;
+      font-size: 0.85rem;
+      font-weight: 400;
+      letter-spacing: 1px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 2px;
       cursor: pointer;
       transition: all 0.2s ease;
       text-transform: uppercase;
-      background: rgba(40, 44, 52, 0.9);
-      color: #e0e0e0;
-      border: 1px solid rgba(255, 255, 255, 0.15);
-      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+      background: transparent;
+      color: #999;
+      box-shadow: none;
     }
 
     .controls button:hover:not(:disabled) {
-      background: rgba(60, 64, 72, 0.95);
-      border-color: rgba(255, 255, 255, 0.3);
-      transform: translateY(-1px);
-      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
+      background: rgba(255, 255, 255, 0.03);
+      border-color: rgba(255, 255, 255, 0.2);
+      color: #ccc;
     }
 
     .controls button:disabled {
-      opacity: 0.4;
+      opacity: 0.3;
       cursor: not-allowed;
     }
 
     .controls button.active {
-      background: rgba(0, 120, 180, 0.8);
-      border-color: #0090d0;
-      color: #ffffff;
+      background: rgba(255, 255, 255, 0.05);
+      border-color: rgba(255, 255, 255, 0.3);
+      color: #fff;
     }
 
-    .controls button.btn-keygen { border-left: 3px solid #c0c0c0; }
-    .controls button.btn-encaps { border-left: 3px solid #50c878; }
-    .controls button.btn-decaps { border-left: 3px solid #ffd700; }
     .controls button.btn-demo {
-      background: rgba(0, 80, 120, 0.8);
-      border-left: 3px solid #00bfff;
+      background: rgba(6, 182, 212, 0.15);
+      border-color: rgba(6, 182, 212, 0.3);
+      color: #06b6d4;
     }
+
+    .controls button.btn-demo:hover:not(:disabled) {
+      background: rgba(6, 182, 212, 0.25);
+      border-color: rgba(6, 182, 212, 0.5);
+    }
+
     .controls button.btn-reset {
-      background: rgba(80, 40, 40, 0.8);
-      border-left: 3px solid #8b4444;
+      background: rgba(239, 68, 68, 0.1);
+      border-color: rgba(239, 68, 68, 0.3);
+      color: #ef4444;
+    }
+
+    .controls button.btn-reset:hover:not(:disabled) {
+      background: rgba(239, 68, 68, 0.2);
+      border-color: rgba(239, 68, 68, 0.5);
     }
 
     .legend {
@@ -259,64 +261,65 @@ import { KyberOrchestrator, KyberState } from './animations/kyber-orchestrator';
       right: 20px;
       top: 50%;
       transform: translateY(-50%);
-      background: rgba(20, 24, 32, 0.92);
-      padding: 16px 20px;
-      border-radius: 4px;
-      border: 1px solid rgba(255, 255, 255, 0.08);
-      color: #d0d0d0;
+      background: rgba(15, 20, 25, 0.85);
+      padding: 14px 18px;
+      border-radius: 2px;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      color: #bbb;
       font-family: 'Consolas', 'Monaco', monospace;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+      box-shadow: none;
     }
 
     .legend h3 {
-      margin: 0 0 12px 0;
-      font-size: 0.75rem;
+      margin: 0 0 10px 0;
+      font-size: 0.7rem;
       text-transform: uppercase;
-      letter-spacing: 1px;
-      color: #888;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-      padding-bottom: 8px;
+      letter-spacing: 1.5px;
+      color: #666;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      padding-bottom: 6px;
+      font-weight: 400;
     }
 
     .legend-item {
       display: flex;
       align-items: center;
-      gap: 12px;
-      margin-bottom: 8px;
-      font-size: 0.8rem;
+      gap: 10px;
+      margin-bottom: 7px;
+      font-size: 0.75rem;
       font-family: 'Consolas', monospace;
     }
 
     .color-box {
-      width: 12px;
-      height: 12px;
-      border-radius: 2px;
-      border: 1px solid rgba(255, 255, 255, 0.2);
+      width: 10px;
+      height: 10px;
+      border-radius: 1px;
+      border: 1px solid rgba(255, 255, 255, 0.15);
     }
 
-    .matrix-a { background: #a0a0a0; }
-    .secret-s { background: #a03030; }
-    .vector-t { background: #d4a520; }
-    .error-e { background: #7030a0; }
-    .cipher { background: #30a060; }
-    .message { background: #e0e0e0; }
+    .matrix-a { background: #999; }
+    .secret-s { background: #d946ef; }
+    .vector-t { background: #a78bfa; }
+    .error-e { background: #facc15; }
+    .cipher { background: #10b981; }
+    .message { background: #e5e5e5; }
 
     .info-panel {
       position: absolute;
       left: 20px;
       bottom: 100px;
-      background: rgba(20, 24, 32, 0.92);
-      padding: 14px 18px;
-      border-radius: 4px;
-      border: 1px solid rgba(255, 255, 255, 0.08);
-      color: #a0a0a0;
+      background: rgba(15, 20, 25, 0.85);
+      padding: 12px 16px;
+      border-radius: 2px;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      color: #888;
       font-family: 'Consolas', 'Monaco', monospace;
-      font-size: 0.75rem;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+      font-size: 0.7rem;
+      box-shadow: none;
     }
 
-    .info-panel p { margin: 4px 0; }
-    .info-panel strong { color: #c0c0c0; }
+    .info-panel p { margin: 3px 0; }
+    .info-panel strong { color: #aaa; }
   `],
 })
 export class KyberVisualizationComponent implements AfterViewInit, OnDestroy {

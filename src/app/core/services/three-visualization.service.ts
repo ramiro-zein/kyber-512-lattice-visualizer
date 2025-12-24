@@ -540,10 +540,10 @@ export class ThreeVisualizationService {
     const colorCenter = config?.colorCenterLine ?? DEFAULT_CONFIG.GRID_COLOR_CENTER;
     const colorGrid = config?.colorGrid ?? DEFAULT_CONFIG.GRID_COLOR_GRID;
 
-    // Grid helper
-    const gridHelper = new THREE.GridHelper(size, divisions, colorCenter, colorGrid);
-    gridHelper.userData['isPermanent'] = true;
-    this.scene.add(gridHelper);
+    // Grid helper - Disabled for minimalist design
+    // const gridHelper = new THREE.GridHelper(size, divisions, colorCenter, colorGrid);
+    // gridHelper.userData['isPermanent'] = true;
+    // this.scene.add(gridHelper);
 
     // Ground plane for shadows
     if (config?.enableGroundPlane !== false && this.config.enableShadows) {
