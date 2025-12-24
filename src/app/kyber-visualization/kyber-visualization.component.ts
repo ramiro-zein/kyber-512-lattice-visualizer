@@ -12,6 +12,7 @@ import {
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { SceneService } from './services/scene.service';
 import { KyberOrchestrator, KyberState } from './animations/kyber-orchestrator';
+import { LogService } from '../services/log.service';
 
 /**
  * Componente principal de visualización 3D de CRYSTALS-Kyber.
@@ -26,19 +27,6 @@ import { KyberOrchestrator, KyberState } from './animations/kyber-orchestrator';
       <canvas #canvas></canvas>
 
       <div class="overlay">
-        <div class="title">
-          <h1>Modelo 3D</h1>
-          <p class="subtitle">CRYSTALS-Kyber</p>
-        </div>
-
-        <div class="status-panel">
-          <div class="phase">{{ currentState().phase | uppercase }}</div>
-          <div class="sub-phase">{{ currentState().subPhase }}</div>
-          <div class="progress-bar">
-            <div class="progress-fill" [style.width.%]="currentState().progress * 100"></div>
-          </div>
-        </div>
-
         <div class="controls">
           <button
             (click)="runKeyGen()"
@@ -327,8 +315,10 @@ export class KyberVisualizationComponent implements AfterViewInit, OnDestroy {
 
   private sceneService = inject(SceneService);
   private platformId = inject(PLATFORM_ID);
+  private logService = inject(LogService);
   private orchestrator!: KyberOrchestrator;
   private isBrowser = false;
+  private lastLoggedSubPhase = '';
 
   currentState = signal<KyberState>({
     phase: 'idle',
@@ -358,6 +348,20 @@ export class KyberVisualizationComponent implements AfterViewInit, OnDestroy {
 
     this.orchestrator.setStateChangeCallback((state) => {
       this.currentState.set(state);
+
+      // Log state changes to activity log
+      if (state.subPhase !== this.lastLoggedSubPhase) {
+        this.lastLoggedSubPhase = state.subPhase;
+
+        if (state.progress === 1) {
+          this.logService.success(state.subPhase);
+        } else if (state.progress === 0 && state.phase !== 'idle') {
+          this.logService.info(state.subPhase);
+        } else if (state.phase !== 'idle') {
+          this.logService.info(state.subPhase);
+        }
+      }
+
       if (state.phase === 'keygen' && state.progress === 1) {
         this.hasKeys.set(true);
       }
@@ -380,33 +384,56 @@ export class KyberVisualizationComponent implements AfterViewInit, OnDestroy {
 
   async runKeyGen(): Promise<void> {
     this.isRunning.set(true);
-    await this.orchestrator.runKeyGen();
-    this.isRunning.set(false);
+    try {
+      await this.orchestrator.runKeyGen();
+    } catch (e) {
+      // Animation was aborted, ignore
+    } finally {
+      this.isRunning.set(false);
+    }
   }
 
   async runEncaps(): Promise<void> {
     this.isRunning.set(true);
-    await this.orchestrator.runEncaps();
-    this.isRunning.set(false);
+    try {
+      await this.orchestrator.runEncaps();
+    } catch (e) {
+      // Animation was aborted, ignore
+    } finally {
+      this.isRunning.set(false);
+    }
   }
 
   async runDecaps(): Promise<void> {
     this.isRunning.set(true);
-    await this.orchestrator.runDecaps();
-    this.isRunning.set(false);
+    try {
+      await this.orchestrator.runDecaps();
+    } catch (e) {
+      // Animation was aborted, ignore
+    } finally {
+      this.isRunning.set(false);
+    }
   }
 
   async runFullDemo(): Promise<void> {
     this.isRunning.set(true);
-    await this.orchestrator.runFullDemo();
-    this.isRunning.set(false);
+    try {
+      await this.orchestrator.runFullDemo();
+    } catch (e) {
+      // Animation was aborted, ignore
+    } finally {
+      this.isRunning.set(false);
+    }
   }
 
   reset(): void {
     if (!this.isBrowser || !this.orchestrator) return;
     this.orchestrator.reset();
+    this.isRunning.set(false);
     this.hasKeys.set(false);
     this.hasCipher.set(false);
+    this.lastLoggedSubPhase = '';
+    this.logService.info('Escena reiniciada');
     this.currentState.set({
       phase: 'idle',
       subPhase: 'Listo para iniciar',

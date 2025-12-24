@@ -48,7 +48,7 @@ export class KyberOrchestrator {
   private currentPhase: KyberPhase = 'idle';
   private k = 3;
   private onStateChange?: (state: KyberState) => void;
-  private activeAnimations: Set<string> = new Set();
+  private isAborted = false;
 
   constructor(scene: THREE.Scene, k = 3) {
     this.scene = scene;
@@ -280,6 +280,9 @@ export class KyberOrchestrator {
   }
 
   reset(): void {
+    // Abort any running animations
+    this.isAborted = true;
+
     const entitiesToRemove = [
       this.matrixA, this.secretS, this.errorE, this.vectorT,
       this.ephemeralR, this.error1, this.error2, this.vectorU, this.torusV,
@@ -287,7 +290,43 @@ export class KyberOrchestrator {
     ];
 
     entitiesToRemove.forEach((entity) => {
-      if (entity) this.scene.remove(entity);
+      if (entity) {
+        // Dispose of Three.js resources
+        entity.traverse((child) => {
+          if (child instanceof THREE.Mesh) {
+            child.geometry?.dispose();
+            if (Array.isArray(child.material)) {
+              child.material.forEach((m) => m.dispose());
+            } else if (child.material) {
+              child.material.dispose();
+            }
+          }
+          if (child instanceof THREE.Line) {
+            child.geometry?.dispose();
+            if (child.material instanceof THREE.Material) {
+              child.material.dispose();
+            }
+          }
+        });
+        this.scene.remove(entity);
+      }
+    });
+
+    // Also clean up any stray lines (rays from matrix operations)
+    const linesToRemove: THREE.Object3D[] = [];
+    this.scene.traverse((child) => {
+      if (child instanceof THREE.Line && child.parent === this.scene) {
+        linesToRemove.push(child);
+      }
+    });
+    linesToRemove.forEach((line) => {
+      if (line instanceof THREE.Line) {
+        line.geometry?.dispose();
+        if (line.material instanceof THREE.Material) {
+          line.material.dispose();
+        }
+      }
+      this.scene.remove(line);
     });
 
     this.matrixA = undefined;
@@ -305,7 +344,12 @@ export class KyberOrchestrator {
     this.sharedKeyReceiver = undefined;
 
     this.currentPhase = 'idle';
-    this.emitState('Escena reiniciada', 0);
+    this.emitState('Listo para iniciar', 0);
+
+    // Reset abort flag after a short delay to allow pending promises to reject
+    setTimeout(() => {
+      this.isAborted = false;
+    }, 100);
   }
 
   update(delta: number, elapsed: number): void {
@@ -316,7 +360,27 @@ export class KyberOrchestrator {
   }
 
   private delay(ms: number): Promise<void> {
-    return new Promise((resolve) => setTimeout(resolve, ms));
+    return new Promise((resolve, reject) => {
+      const timeoutId = setTimeout(() => {
+        if (this.isAborted) {
+          reject(new Error('Animation aborted'));
+        } else {
+          resolve();
+        }
+      }, ms);
+
+      // Store timeout for potential cleanup
+      if (this.isAborted) {
+        clearTimeout(timeoutId);
+        reject(new Error('Animation aborted'));
+      }
+    });
+  }
+
+  private checkAbort(): void {
+    if (this.isAborted) {
+      throw new Error('Animation aborted');
+    }
   }
 
   /** Visualiza el producto matriz-vector A·s con rayos */
