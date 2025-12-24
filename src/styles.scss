@@ -1,9 +1,15 @@
-@use 'tailwindcss';
+/* Global styles for CRYSTALS-Kyber 3D Visualization */
 
-body {
+* {
   margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body {
+  width: 100%;
+  height: 100%;
   overflow: hidden;
-  background-color: #020617;
-  font-family: 'Inter', sans-serif;
-  color: #e2e8f0;
+  font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+  background: #000000;
 }
