@@ -2,10 +2,6 @@ import { Component, inject, signal } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { LogService } from './services/log.service';
 
-/**
- * Main application component for professional 3D visualization
- * Clean 3D environment ready for custom content
- */
 @Component({
   selector: 'app-root',
   imports: [RouterOutlet],
@@ -20,7 +16,7 @@ export class App {
     return date.toLocaleTimeString('es-ES', {
       hour: '2-digit',
       minute: '2-digit',
-      second: '2-digit'
+      second: '2-digit',
     });
   }
 

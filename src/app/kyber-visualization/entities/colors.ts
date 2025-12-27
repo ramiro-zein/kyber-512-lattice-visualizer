@@ -2,16 +2,16 @@ import * as THREE from 'three';
 
 /** Paleta de colores semánticos para elementos del algoritmo Kyber */
 export const KYBER_COLORS = {
-  MATRIX_A: new THREE.Color(0xc0c0c0),      // Matriz pública A - plateado
-  SECRET_S: new THREE.Color(0x8b0000),       // Secreto s - rojo oscuro
-  ERROR_E: new THREE.Color(0x9400d3),        // Errores e - violeta
-  EPHEMERAL_R: new THREE.Color(0x00bfff),    // Vector efímero r - azul
-  VECTOR_T: new THREE.Color(0xffd700),       // Vector público t - dorado
-  CIPHERTEXT: new THREE.Color(0x50c878),     // Cifrado (u, v) - esmeralda
-  MESSAGE_M: new THREE.Color(0xffffff),      // Mensaje m - blanco
-  OPERATION_RAY: new THREE.Color(0xffe4b5),  // Rayos de operaciones
-  SUCCESS: new THREE.Color(0x00ff00),        // Verificación exitosa
-  FAILURE: new THREE.Color(0xff0000),        // Verificación fallida
+  MATRIX_A: new THREE.Color(0xc0c0c0), // Matriz pública A - plateado
+  SECRET_S: new THREE.Color(0x8b0000), // Secreto s - rojo oscuro
+  ERROR_E: new THREE.Color(0x9400d3), // Errores e - violeta
+  EPHEMERAL_R: new THREE.Color(0x00bfff), // Vector efímero r - azul
+  VECTOR_T: new THREE.Color(0xffd700), // Vector público t - dorado
+  CIPHERTEXT: new THREE.Color(0x50c878), // Cifrado (u, v) - esmeralda
+  MESSAGE_M: new THREE.Color(0xffffff), // Mensaje m - blanco
+  OPERATION_RAY: new THREE.Color(0xffe4b5), // Rayos de operaciones
+  SUCCESS: new THREE.Color(0x00ff00), // Verificación exitosa
+  FAILURE: new THREE.Color(0xff0000), // Verificación fallida
   BACKGROUND_DARK: new THREE.Color(0x000a14),
   BACKGROUND_LIGHT: new THREE.Color(0x001133),
 };
@@ -33,7 +33,10 @@ export function createGlassMaterial(color: THREE.Color, opacity = 0.7): THREE.Me
 }
 
 /** Material emisivo para elementos que brillan */
-export function createEmissiveMaterial(color: THREE.Color, intensity = 0.5): THREE.MeshStandardMaterial {
+export function createEmissiveMaterial(
+  color: THREE.Color,
+  intensity = 0.5
+): THREE.MeshStandardMaterial {
   return new THREE.MeshStandardMaterial({
     color: color,
     emissive: color,

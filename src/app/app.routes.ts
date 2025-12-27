@@ -4,6 +4,6 @@ import { KyberVisualizationComponent } from './kyber-visualization/kyber-visuali
 export const routes: Routes = [
   {
     path: '',
-    component: KyberVisualizationComponent
-  }
+    component: KyberVisualizationComponent,
+  },
 ];

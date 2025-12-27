@@ -25,15 +25,24 @@ export type SecurityLevel = keyof typeof SECURITY_PARAMS;
 export const CBD_DISTRIBUTION = {
   ETA_2: {
     probabilities: new Map<number, number>([
-      [-2, 1 / 16], [-1, 4 / 16], [0, 6 / 16], [1, 4 / 16], [2, 1 / 16],
+      [-2, 1 / 16],
+      [-1, 4 / 16],
+      [0, 6 / 16],
+      [1, 4 / 16],
+      [2, 1 / 16],
     ]),
     support: [-2, -1, 0, 1, 2],
     variance: 1,
   },
   ETA_3: {
     probabilities: new Map<number, number>([
-      [-3, 1 / 64], [-2, 6 / 64], [-1, 15 / 64], [0, 20 / 64],
-      [1, 15 / 64], [2, 6 / 64], [3, 1 / 64],
+      [-3, 1 / 64],
+      [-2, 6 / 64],
+      [-1, 15 / 64],
+      [0, 20 / 64],
+      [1, 15 / 64],
+      [2, 6 / 64],
+      [3, 1 / 64],
     ]),
     support: [-3, -2, -1, 0, 1, 2, 3],
     variance: 1.5,

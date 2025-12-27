@@ -102,7 +102,8 @@ export class TorusPolynomial extends THREE.Group {
       const centered = MathUtils.centerReduce(coeff, this.q);
       const logNormalized = MathUtils.logScale(coeff, this.q);
 
-      const radius = this.sphereMinRadius + logNormalized * (this.sphereMaxRadius - this.sphereMinRadius);
+      const radius =
+        this.sphereMinRadius + logNormalized * (this.sphereMaxRadius - this.sphereMinRadius);
       sphere.scale.setScalar(radius / this.sphereMinRadius);
 
       const material = sphere.material as THREE.MeshStandardMaterial;
@@ -147,7 +148,8 @@ export class TorusPolynomial extends THREE.Group {
 
           this.coefficientSpheres.forEach((sphere) => {
             const randomScale =
-              this.sphereMinRadius + Math.random() * variance * (this.sphereMaxRadius - this.sphereMinRadius);
+              this.sphereMinRadius +
+              Math.random() * variance * (this.sphereMaxRadius - this.sphereMinRadius);
             sphere.scale.setScalar(randomScale / this.sphereMinRadius);
 
             const material = sphere.material as THREE.MeshStandardMaterial;

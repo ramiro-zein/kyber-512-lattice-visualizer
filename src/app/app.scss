@@ -1,116 +1,115 @@
-// Activity Log Panel
 .activity-log {
-    position: fixed;
-    bottom: 16px;
-    left: 16px;
-    width: 320px;
-    max-height: 200px;
-    background-color: rgba(15, 20, 25, 0.85);
-    border: 1px solid rgba(255, 255, 255, 0.05);
-    border-radius: 2px;
-    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
-    font-size: 11px;
-    overflow: hidden;
-    box-shadow: none;
-    z-index: 1000;
+  position: fixed;
+  bottom: 16px;
+  left: 16px;
+  width: 320px;
+  max-height: 200px;
+  background-color: rgba(15, 20, 25, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 2px;
+  font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+  font-size: 11px;
+  overflow: hidden;
+  box-shadow: none;
+  z-index: 1000;
 
-    .log-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 7px 12px;
-        background-color: transparent;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  .log-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 7px 12px;
+    background-color: transparent;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
 
-        .log-title {
-            color: #666;
-            font-weight: 400;
-            text-transform: uppercase;
-            font-size: 9px;
-            letter-spacing: 1.5px;
-        }
-
-        .log-clear {
-            background: transparent;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            color: #555;
-            padding: 2px 8px;
-            border-radius: 1px;
-            cursor: pointer;
-            font-size: 9px;
-            transition: all 0.2s ease;
-
-            &:hover {
-                border-color: rgba(255, 255, 255, 0.2);
-                color: #888;
-            }
-        }
+    .log-title {
+      color: #666;
+      font-weight: 400;
+      text-transform: uppercase;
+      font-size: 9px;
+      letter-spacing: 1.5px;
     }
 
-    .log-entries {
-        max-height: 160px;
-        overflow-y: auto;
-        padding: 6px 0;
+    .log-clear {
+      background: transparent;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: #555;
+      padding: 2px 8px;
+      border-radius: 1px;
+      cursor: pointer;
+      font-size: 9px;
+      transition: all 0.2s ease;
 
-        &::-webkit-scrollbar {
-            width: 4px;
-        }
+      &:hover {
+        border-color: rgba(255, 255, 255, 0.2);
+        color: #888;
+      }
+    }
+  }
 
-        &::-webkit-scrollbar-track {
-            background: transparent;
-        }
+  .log-entries {
+    max-height: 160px;
+    overflow-y: auto;
+    padding: 6px 0;
 
-        &::-webkit-scrollbar-thumb {
-            background: #333;
-            border-radius: 2px;
-        }
+    &::-webkit-scrollbar {
+      width: 4px;
     }
 
-    .log-entry {
-        display: flex;
-        gap: 8px;
-        padding: 3px 12px;
-        transition: background-color 0.2s ease;
-
-        &:hover {
-            background-color: rgba(255, 255, 255, 0.02);
-        }
-
-        .log-time {
-            color: #444;
-            flex-shrink: 0;
-            font-size: 10px;
-        }
-
-        .log-message {
-            color: #888;
-            word-break: break-word;
-            font-size: 10px;
-        }
-
-        // Log type colors
-        &.log-info {
-            .log-message {
-                color: #6cb6ff;
-            }
-        }
-
-        &.log-success {
-            .log-message {
-                color: #3fb950;
-            }
-        }
-
-        &.log-warning {
-            .log-message {
-                color: #d29922;
-            }
-        }
-
-        &.log-error {
-            .log-message {
-                color: #f85149;
-            }
-        }
+    &::-webkit-scrollbar-track {
+      background: transparent;
     }
+
+    &::-webkit-scrollbar-thumb {
+      background: #333;
+      border-radius: 2px;
+    }
+  }
+
+  .log-entry {
+    display: flex;
+    gap: 8px;
+    padding: 3px 12px;
+    transition: background-color 0.2s ease;
+
+    &:hover {
+      background-color: rgba(255, 255, 255, 0.02);
+    }
+
+    .log-time {
+      color: #444;
+      flex-shrink: 0;
+      font-size: 10px;
+    }
+
+    .log-message {
+      color: #888;
+      word-break: break-word;
+      font-size: 10px;
+    }
+
+    // Log type colors
+    &.log-info {
+      .log-message {
+        color: #6cb6ff;
+      }
+    }
+
+    &.log-success {
+      .log-message {
+        color: #3fb950;
+      }
+    }
+
+    &.log-warning {
+      .log-message {
+        color: #d29922;
+      }
+    }
+
+    &.log-error {
+      .log-message {
+        color: #f85149;
+      }
+    }
+  }
 }
