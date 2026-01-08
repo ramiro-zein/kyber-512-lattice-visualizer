@@ -6,7 +6,7 @@ import { LogService } from './services/log.service';
   selector: 'app-root',
   imports: [RouterOutlet],
   templateUrl: './app.html',
-  styleUrl: './app.scss'
+  styleUrl: './app.scss',
 })
 export class App {
   protected readonly title = signal('modelo-cifrado');
@@ -16,7 +16,7 @@ export class App {
     return date.toLocaleTimeString('es-ES', {
       hour: '2-digit',
       minute: '2-digit',
-      second: '2-digit'
+      second: '2-digit',
     });
   }
 
