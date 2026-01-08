@@ -128,7 +128,7 @@ La seguridad se basa en **Module-LWE** (Learning With Errors sobre módulos), co
 ## 📖 Documentación
 
 Para documentación técnica completa de nivel doctorado, ver:
-- [KYBER-TECHNICAL-DOCUMENTATION.md](KYBER-TECHNICAL-DOCUMENTATION.md)
+- [KYBER-TECHNICAL-DOCUMENTATION.md](DOCUMENTACION-TECNICA-KYBER.md)
 
 Incluye:
 - Fundamentos matemáticos detallados

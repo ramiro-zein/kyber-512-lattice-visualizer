@@ -1,14 +1,12 @@
 # Especificación de Visualización 3D para CRYSTALS-Kyber
 
-## Documento de Análisis y Diseño para Modeladores 3D
+---
+
+# PARTE I: RAZONAMIENTO Y ANÁLISIS
 
 ---
 
-# PARTE I: RAZONAMIENTO Y ANÁLISIS EXHAUSTIVO
-
----
-
-## 1. ANÁLISIS DE ESTRUCTURAS ALGEBRAICAS FUNDAMENTALES
+## 1. ANÁLISIS DE ESTRUCTURAS ALGEBRAICAS
 
 ### 1.1 El Anillo de Polinomios Rq
 
