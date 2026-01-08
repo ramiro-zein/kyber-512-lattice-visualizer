@@ -94,7 +94,11 @@ La cuadrícula $k \times k$ de toros preserva:
 Sea $\chi_\eta$ la distribución binomial centrada con parámetro $\eta$:
 $$\text{CBD}_\eta: x = \sum_{i=0}^{\eta-1}(a_i - b_i), \quad a_i, b_i \leftarrow \{0,1\}$$
 
-Para Kyber-768: $\eta = 2$, produciendo $x \in \{-2, -1, 0, 1, 2\}$ con distribución:
+Para ML-KEM-512 (el objetivo de este proyecto):
+- **KeyGen**: $\eta_1 = 3$ para $\mathbf{s}$ y $\mathbf{e}$
+- **Encaps**: $\eta_2 = 2$ para $\mathbf{r}$, $\mathbf{e}_1$, $e_2$
+
+Con $\eta = 2$, produciendo $x \in \{-2, -1, 0, 1, 2\}$ con distribución:
 $$\Pr[x = k] = \binom{2\eta}{\eta + k} / 2^{2\eta}$$
 
 **Definición 3.2** (Problema M-LWE Decisional)
