@@ -53,8 +53,8 @@ R = ℤq[X]/(X^N + 1)
 
 Donde:
 - **N = 256**: Grado del polinomio
-- **Q = 3329**: Módulo primo (Q ≡ 1 mod 2N)
-- **X^N + 1**: Polinomio ciclotómico 2N-ésimo
+- **Q = 3329**: Módulo primo (Q ≡ 1 mod 2N, necesario para NTT eficiente)
+- **X^N + 1 = Φ₅₁₂(X)**: El polinomio ciclotómico 512-ésimo (donde 512 = 2N)
 
 #### Propiedades Algebraicas
 
@@ -83,7 +83,7 @@ Donde:
 Para generar ruido criptográfico con propiedades estadísticas controladas:
 
 ```python
-CBD(η):
+CBD_η:
   a = Σ(i=0 to η-1) random_bit()
   b = Σ(i=0 to η-1) random_bit()
   return a - b
@@ -92,7 +92,15 @@ CBD(η):
 Para Kyber-512, η = 2, produciendo valores en **{-2, -1, 0, 1, 2}** con distribución:
 
 ```
-P(CBD(2) = k) = (2 choose (2+k)/2) / 16   para k ∈ {-2,...,2}
+P(CBD_η(k)) = C(2η, η+k) / 2^(2η)
+
+Para η=2:
+P(CBD₂(k)) = C(4, 2+k) / 16
+  • P(-2) = C(4,0)/16 = 1/16  ≈ 6.25%
+  • P(-1) = C(4,1)/16 = 4/16  = 25%
+  • P(0)  = C(4,2)/16 = 6/16  = 37.5%
+  • P(1)  = C(4,3)/16 = 4/16  = 25%
+  • P(2)  = C(4,4)/16 = 1/16  ≈ 6.25%
 ```
 
 ### 4. Operaciones Criptográficas
@@ -138,6 +146,37 @@ e_total = e₂ + s^T·e₁ - e^T·r
 **Bound de Norma Infinito**: ||e_total||∞ < ⌊q/4⌋ con probabilidad ≥ 1 - 2^(-128)
 
 **Probabilidad de Error**: < 2^(-139) para Kyber-512
+
+---
+
+## Simplificaciones Educativas
+
+> **Importante**: Esta implementación es pedagógica y difiere intencionalmente del estándar FIPS 203 (ML-KEM) para facilitar la comprensión.
+
+### Diferencias con el Estándar Oficial
+
+| Aspecto | Estándar FIPS 203 | Esta Implementación | Justificación |
+|---------|-------------------|---------------------|---------------|
+| **Tipo** | KEM (Key Encapsulation) | PKE simplificado (cifrado de bit) | Más intuitivo didácticamente |
+| **Seguridad** | CCA-2 (vía transformación FO) | CPA básica | Simplifica el flujo algorítmico |
+| **Compresión** | Compress_d(u), Compress_d(v) | Sin compresión | Evita aritmética de redondeo adicional |
+| **Generación** | Determinista vía XOF (SHAKE) | Math.random() | Simplifica dependencias |
+| **Parámetro η** | η₁=3 (KeyGen), η₂=2 (Encaps) | η=2 uniforme | Simplifica implementación CBD |
+| **Hash** | SHA3-256, SHA3-512, SHAKE-256 | No implementado | Omite derivación de claves |
+
+### Implicaciones para Producción
+
+Esta implementación **NO debe usarse en producción** porque:
+
+1. **Math.random() no es criptográficamente seguro**: Debe usarse Web Crypto API
+2. **Falta protección CCA-2**: Vulnerable a ataques de texto cifrado elegido
+3. **Sin timing-attack resistance**: Las operaciones no son de tiempo constante
+4. **Sin compresión**: El ciphertext es más grande que el estándar
+
+Para implementaciones de producción, refiérase a:
+- [liboqs](https://github.com/open-quantum-safe/liboqs)
+- [PQClean](https://github.com/PQClean/PQClean)
+- Implementaciones oficiales de CRYSTALS
 
 ---
 
@@ -585,16 +624,18 @@ ngComponent.runKeyGen();
 
 ### A. Parámetros de Kyber
 
-| Parámetro | Kyber-512 | Kyber-768 | Kyber-1024 |
-|-----------|-----------|-----------|------------|
+| Parámetro | ML-KEM-512 | ML-KEM-768 | ML-KEM-1024 |
+|-----------|------------|------------|-------------|
 | N | 256 | 256 | 256 |
 | Q | 3329 | 3329 | 3329 |
 | K | 2 | 3 | 4 |
-| η₁ | 3 | 2 | 2 |
-| η₂ | 2 | 2 | 2 |
-| Security | NIST 1 | NIST 3 | NIST 5 |
+| η₁ (KeyGen) | 3 | 2 | 2 |
+| η₂ (Encaps) | 2 | 2 | 2 |
+| Security | NIST Level 1 | NIST Level 3 | NIST Level 5 |
 | PK Size | 800 B | 1184 B | 1568 B |
 | CT Size | 768 B | 1088 B | 1568 B |
+
+> **Nota**: Los nombres oficiales según FIPS 203 son ML-KEM-512/768/1024 (Module-Lattice-Based Key Encapsulation Mechanism). η₁ se usa para generar s y e en KeyGen, mientras η₂ se usa para r, e₁, e₂ en Encaps.
 
 ### B. Glosario
 
