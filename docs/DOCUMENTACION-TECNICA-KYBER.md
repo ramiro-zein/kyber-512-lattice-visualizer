@@ -24,12 +24,12 @@ Este proyecto implementa una visualización interactiva 3D completa del algoritm
 
 ### Objetivos
 
-- ✅ Implementación matemática rigurosa de Kyber-512
-- ✅ Visualización 3D de estructuras lattice en tiempo real
-- ✅ Panel de análisis matemático con estadísticas en vivo
-- ✅ Modo educativo con explicaciones de nivel doctorado
-- ✅ Arquitectura modular siguiendo principios SOLID
-- ✅ Código documentado con estándares académicos
+- Implementación matemática rigurosa de Kyber-512
+- Visualización 3D de estructuras lattice en tiempo real
+- Panel de análisis matemático con estadísticas en vivo
+- Modo educativo con explicaciones de nivel doctorado
+- Arquitectura modular siguiendo principios SOLID
+- Código documentado con estándares académicos
 
 ### Tecnologías Core
 
@@ -453,12 +453,12 @@ feature/* # Features en desarrollo
 #### TypeScript
 
 ```typescript
-// ✅ BUENO: Tipado explícito
+// BUENO: Tipado explícito
 function encrypt(bit: 0 | 1): Promise<void> {
   // ...
 }
 
-// ❌ MALO: any o implícito
+// MALO: any o implícito
 function encrypt(bit) {
   // ...
 }
