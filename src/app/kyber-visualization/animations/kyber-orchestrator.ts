@@ -46,11 +46,11 @@ export class KyberOrchestrator {
   private readonly CIPHER_ZONE = new THREE.Vector3(0, 50, 100);
 
   private currentPhase: KyberPhase = 'idle';
-  private k = 3;
+  private k = 2;
   private onStateChange?: (state: KyberState) => void;
   private isAborted = false;
 
-  constructor(scene: THREE.Scene, k = 3) {
+  constructor(scene: THREE.Scene, k = 2) {
     this.scene = scene;
     this.k = k;
   }
@@ -60,7 +60,7 @@ export class KyberOrchestrator {
   }
 
   private emitState(subPhase: string, progress: number): void {
-    this.onStateChange?.({ phase: this.currentPhase, subPhase, progress });
+    this.onStateChange?.({phase: this.currentPhase, subPhase, progress});
   }
 
   /** Acto 1: Generación de claves (pk, sk) */

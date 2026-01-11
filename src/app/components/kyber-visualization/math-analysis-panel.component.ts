@@ -6,7 +6,7 @@
 
 import {Component, Input} from '@angular/core';
 import {CommonModule} from '@angular/common';
-import {PolyStatistics, Poly} from '../../core/models/kyber.types';
+import {PolyStatistics} from '../../core/models/kyber.types';
 
 /**
  * Component displaying real-time mathematical analysis

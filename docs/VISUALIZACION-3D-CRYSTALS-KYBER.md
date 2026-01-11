@@ -91,7 +91,7 @@ Donde:
 
 **Decisión de modelado**: El secreto **s** y el error **e** se visualizarán con coeficientes de menor altura/intensidad comparados con elementos aleatorios. La distribución binomial centrada se representará como una "nube gaussiana" discreta alrededor del cero.
 
-**Justificación**: Los coeficientes pequeños son la característica definitoria de la seguridad. Visualizar esta "pequeñez" permite comprender intuitivamente por qué el ruido enmascara el secreto pero permite recuperación con la clave privada.
+**Justificación**: Los coeficientes pequeños son la característica definitoria de la seguridad. Al visualizar permite comprender intuitivamente por qué el ruido enmascara el secreto pero permite recuperación con la clave privada.
 
 ### 2.2 La Geometría de las Retículas (Lattices)
 
@@ -190,8 +190,8 @@ Para mantener claridad visual mientras se respeta la complejidad matemática:
 | Vector r (efímero) | Azul eléctrico | #00BFFF | Aleatorio fresco, temporal |
 | Vector público t | Oro | #FFD700 | Derivado valioso del secreto |
 | Ciphertext (u, v) | Verde esmeralda | #50C878 | Resultado protegido, datos cifrados |
-| Mensaje m | Blanco brillante | #FFFFFF | Información pura original |
-| Clave K | Arcoíris/Holográfico | Gradiente | Resultado final, síntesis de todo |
+| Mensaje m | Blanco brillante | #FFFFFF | Información original |
+| Clave K | Arcoíris/Holográfico | Gradiente | Resultado final |
 
 **Justificación**: Los colores comunican inmediatamente el rol y sensibilidad de cada componente sin necesidad de etiquetas textuales constantes.
 
@@ -257,7 +257,7 @@ CBD_η: Σᵢ(aᵢ - bᵢ) donde aᵢ,bᵢ ← {0,1}
 
 Para η=2: rango {-2, -1, 0, 1, 2} con distribución (1, 4, 6, 4, 1)/16
 
-**Decisión de modelado**: Al generar s o e, mostrar una "ruleta de probabilidad" 3D donde sectores de diferentes tamaños (proporcionales a probabilidades) giran y se detienen, emitiendo el coeficiente seleccionado hacia el toro en construcción.
+**Decisión de modelado**: Al generar s o e, mostrar una ruleta de probabilidad 3D donde sectores de diferentes tamaños giran y se detienen, emitiendo el coeficiente seleccionado hacia el toro en construcción.
 
 **Justificación**: Hace explícita la naturaleza probabilística y la concentración alrededor del cero que es crítica para la seguridad.
 
@@ -268,7 +268,7 @@ Kyber utiliza:
 - **H = SHA3-256**: Para hash de mensajes
 - **J = SHAKE-256**: Para generación pseudoaleatoria
 
-**Decisión de modelado**: Representar cada hash como un "túnel de transformación" caótico donde la entrada (bloque de datos) se fragmenta, reorganiza en patrón aparentemente aleatorio, y emerge como salida compactada. Diferentes colores de túnel para cada función.
+**Decisión de modelado**: Representar cada hash como un túnel de transformación caótico donde la entrada (bloque de datos) se fragmenta, reorganiza en patrón aparentemente aleatorio, y emerge como salida compactada. Diferentes colores de túnel para cada función.
 
 **Justificación**: Los hashes son cajas negras funcionalmente, pero su rol transformador es esencial. El túnel caótico comunica la irreversibilidad y mezcla de información.
 
@@ -281,7 +281,7 @@ Durante Encaps: La randomness r se deriva del mensaje m
 Durante Decaps: Se reencripta y verifica antes de aceptar
 ```
 
-**Decisión de modelado**: Mostrar el circuito de "verificación circular" donde:
+**Decisión de modelado**: Mostrar el circuito de verificación circular donde:
 1. El mensaje recuperado m' se usa para regenerar r'
 2. Se recalcula el cifrado esperado (u', v')
 3. Comparación visual con el cifrado recibido (u, v)
@@ -305,14 +305,14 @@ Durante Decaps: Se reencripta y verifica antes de aceptar
 
 ### 6.2 Iluminación
 
-- **Luz ambiente**: Muy baja (10%), para mantener misterio y enfoque
+- **Luz ambiente**: Muy baja (10%), para mantener enfoque
 - **Luces puntuales**: En cada operación activa, iluminando la zona de trabajo
-- **Emisión propia**: Cada elemento matemático emite luz proporcional a su "actividad" o importancia actual
+- **Emisión propia**: Cada elemento matemático emite luz proporcional a su importancia actual
 - **Sombras suaves**: Para dar profundidad sin oscurecer detalles
 
 ### 6.3 Animaciones Físicamente Plausibles
 
-Aunque son entidades matemáticas abstractas, aplicar física suave para naturalidad:
+Aplicar física suave para naturalidad:
 - **Inercia leve**: Los elementos no aparecen/desaparecen instantáneamente
 - **Elasticidad**: Los toros se deforman ligeramente durante transformaciones
 - **Partículas residuales**: Operaciones dejan "estelas" temporales
@@ -487,7 +487,7 @@ PROFUNDIDAD DE CAMPO:
   - Bokeh hexagonal para luces desenfocadas
 ```
 
-### D. INVENTARIO DE OBJETOS
+### D. OBJETOS
 
 | ID | Nombre | Cantidad | Instancias |
 |----|--------|----------|------------|
@@ -523,13 +523,13 @@ PARTÍCULAS AMBIENTALES:
   Duración: Permanente
 ```
 
-### F. MAPA DE COLORES DEFINITIVO
+### F. MAPA DE COLORES
 
 ```css
 /* Variables de color para la escena */
 --matriz-A: #C0C0C0;           /* Plateado - Público, neutral */
 --secreto-s: #8B0000;          /* Rojo sangre - Privado, crítico */
---error-e: rgba(148,0,211,0.5); /* Violeta 50% - Ruido cuántico */
+--error-e: rgba(148,0,211,0.5); /* Violeta 50% - Ruido */
 --efimero-r: #00BFFF;          /* Azul eléctrico - Temporal */
 --vector-t: #FFD700;           /* Dorado - Derivado valioso */
 --cifrado-uv: #50C878;         /* Esmeralda - Protegido */
@@ -560,25 +560,3 @@ ETIQUETAS TEMPORALES (aparecen durante operaciones):
 FUENTE: Monoespaciada técnica (Fira Code, JetBrains Mono)
 TAMAÑO: Escalado según distancia de cámara
 ```
-
-### H. RESUMEN EJECUTIVO PARA PRODUCCIÓN
-
-**Concepto central**: Representar CRYSTALS-Kyber como una coreografía espacial donde estructuras toroidales (polinomios en anillos cíclicos) interactúan mediante rayos de luz (operaciones algebraicas) para transformar información en tres fases: génesis de claves, encapsulamiento del secreto, y recuperación verificada.
-
-**Fidelidad matemática**: Cada elemento visual corresponde 1:1 con entidades del algoritmo. Los toros reflejan la estructura de anillo cociente Rq, las 256 posiciones representan coeficientes polinomiales, y las operaciones (multiplicación, suma, hash) tienen representaciones animadas que siguen el flujo algorítmico exacto.
-
-**Prioridades de producción**:
-1. Legibilidad de estructuras (toros claramente diferenciados)
-2. Claridad del flujo (dirección temporal inequívoca)
-3. Distinción público/privado (separación espacial y cromática)
-4. Fidelidad de operaciones (animaciones matemáticamente correctas)
-5. Estética cohesiva (paleta unificada, materiales consistentes)
-
-**Resolución recomendada**: 4K (3840×2160) para detalle en zoom
-**Frame rate**: 60fps para animaciones fluidas
-**Duración total estimada**: 60-70 segundos para ciclo completo
-
----
-
-*Documento preparado para equipo de modelado 3D.*
-*Cualquier desviación del esquema debe justificarse matemáticamente.*

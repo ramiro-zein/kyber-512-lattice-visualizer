@@ -38,6 +38,7 @@ __screenshots__/
 .settings/
 *.sublime-workspace
 *.swp
+./.vscode
 
 # Configuraciones de Visual Studio Code
 .vscode/*

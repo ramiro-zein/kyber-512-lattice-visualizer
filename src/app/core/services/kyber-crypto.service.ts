@@ -367,8 +367,7 @@ export class KyberCryptoService {
     const coeff = noisyM.coeffs[0];
     const lowerBound = Math.floor(Q / 4);
     const upperBound = Math.floor((3 * Q) / 4);
-    // Per FIPS 203: decode to 1 if coefficient ∈ [⌊q/4⌋, ⌊3q/4⌋], else 0
-    const decryptedBit = coeff >= lowerBound && coeff <= upperBound ? 1 : 0;
+    const decryptedBit = coeff > lowerBound && coeff < upperBound ? 1 : 0;
 
     this.logEvent({
       operation: CryptoOperation.DECRYPTION,

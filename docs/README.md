@@ -1,212 +1,104 @@
-# Kyber-512 3D Visualization 🔐
+# Visualización 3D de CRYSTALS-Kyber-512
 
-> **Visualización Interactiva 3D del Algoritmo Post-Cuántico Kyber-512**
-> Proyecto de Nivel Doctorado
-
-<p align="center">
-  <img src="https://img.shields.io/badge/Angular-20.3-red?style=for-the-badge&logo=angular" />
-  <img src="https://img.shields.io/badge/Three.js-r128-black?style=for-the-badge&logo=three.js" />
-  <img src="https://img.shields.io/badge/TypeScript-5.9-blue?style=for-the-badge&logo=typescript" />
-  <img src="https://img.shields.io/badge/Security-Post_Quantum-green?style=for-the-badge" />
-</p>
-
-## 🎯 Descripción
-
-Implementación completa y visualización interactiva en 3D del algoritmo de cifrado post-cuántico **CRYSTALS-Kyber-512**, seleccionado por el NIST como estándar para criptografía resistente a ataques cuánticos.
-
-### Características Principales
-
-- ✅ **Implementación Matemática Rigurosa**: Kyber-512 completo con operaciones en anillos polinómicos
-- ✅ **Visualización 3D en Tiempo Real**: Estructuras lattice renderizadas con Three.js
-- ✅ **Panel de Análisis Matemático**: Estadísticas en vivo de polinomios
-- ✅ **Modo Educativo Avanzado**: Explicaciones de nivel doctoral
-- ✅ **Arquitectura Modular**: Separación clara de responsabilidades (SOLID)
-- ✅ **TypeScript Estricto**: Tipado fuerte sin uso de `any`
-
-## 🚀 Inicio Rápido
-
-### Prerequisitos
-
-- Node.js 20+
-- pnpm (recomendado) o npm
-
-### Instalación
-
-```bash
-# Clonar repositorio
-git clone <repo-url>
-cd modelo-cifrado
-
-# Instalar dependencias
-pnpm install
-
-# Iniciar servidor de desarrollo
-pnpm start
-```
-
-Navega a `http://localhost:4200/` para ver la aplicación.
-
-## 📚 Uso de la Aplicación
-
-### 1. Generación de Llaves
-
-Haz clic en **"Generar Llaves"** para:
-- Generar matriz pública A (2×2 de polinomios)
-- Crear vector secreto s usando CBD(η=2)
-- Calcular llave pública t = As + e
-
-### 2. Encriptación
-
-Selecciona un bit (0 o 1) para:
-- Codificar mensaje como polinomio
-- Generar vectores aleatorios r, e₁, e₂
-- Calcular ciphertext (u, v)
-- Visualizar transmisión
-
-### 3. Desencriptación
-
-Haz clic en **"Descifrar"** para:
-- Calcular s^T · u
-- Recuperar mensaje ruidoso
-- Decodificar bit original
-- Verificar correctitud
-
-## 🏗️ Arquitectura
-
-```
-src/app/
-├── core/
-│   ├── models/
-│   │   └── kyber.types.ts              # Tipos matemáticos
-│   └── services/
-│       ├── kyber-crypto.service.ts      # Lógica criptográfica
-│       └── three-visualization.service.ts # Motor 3D
-├── components/
-│   └── kyber-visualization/
-│       ├── math-analysis-panel.component.ts
-│       └── educational-panel.component.ts
-└── app.ts                               # Orquestador principal
-```
-
-### Servicios Principales
-
-#### KyberCryptoService
-- Implementa algoritmos de Kyber-512
-- Gestiona estado criptográfico
-- Emite eventos para logging
-
-#### ThreeVisualizationService
-- Renderiza estructuras lattice en 3D
-- Gestiona animaciones y transiciones
-- Optimiza performance visual
-
-## 🔬 Fundamentos Matemáticos
-
-### Anillo Polinómico
-
-```
-R = ℤ₃₃₂₉[X]/(X²⁵⁶ + 1)
-```
-
-### Parámetros Kyber-512
-
-| Parámetro | Valor | Descripción |
-|-----------|-------|-------------|
-| N | 256 | Grado del polinomio |
-| Q | 3329 | Módulo primo |
-| K | 2 | Dimensión del módulo |
-| η | 2 | Parámetro CBD |
-| Security | NIST Level 1 | Equivalente a AES-128 |
-
-### Seguridad
-
-La seguridad se basa en **Module-LWE** (Learning With Errors sobre módulos), considerado resistente a:
-- ✅ Computadoras clásicas
-- ✅ Computadoras cuánticas (algoritmo de Shor)
-- ✅ Ataques de lado de canal (con implementación adecuada)
-
-## 📖 Documentación
-
-Para documentación técnica completa de nivel doctorado, ver:
-- [KYBER-TECHNICAL-DOCUMENTATION.md](DOCUMENTACION-TECNICA-KYBER.md)
-
-Incluye:
-- Fundamentos matemáticos detallados
-- Análisis de seguridad
-- Guía de desarrollo
-- Referencias académicas
-
-## 🛠️ Scripts Disponibles
-
-```bash
-# Desarrollo
-pnpm start              # Servidor dev con HMR
-
-# Build
-pnpm run build          # Build de producción
-pnpm run watch          # Build continuo
-
-# Testing
-pnpm test               # Tests unitarios
-```
-
-## 🎨 Tecnologías
-
-- **Framework**: Angular 20.3
-- **3D**: Three.js + OrbitControls
-- **Animaciones**: Tween.js
-- **Estilos**: Tailwind CSS 4
-- **TypeScript**: 5.9
-- **Build**: esbuild (vía Angular)
-
-## 📊 Características Técnicas
-
-### Visualización 3D
-
-- **Instanced Meshes**: Optimización de draw calls
-- **Iluminación Profesional**: 3 luces direccionales + ambiente
-- **Esquema de Colores Semántico**: Color-coding por tipo de datos
-- **Animaciones Fluidas**: Tween.js para transiciones suaves
-
-### Paneles de Análisis
-
-#### Panel Matemático
-- Media y desviación estándar
-- Norma L2 euclidiana
-- Valores máximo/mínimo
-- Interpretación automática
-
-#### Panel Educativo
-- Explicaciones contextuales
-- Fórmulas matemáticas
-- Notas de seguridad
-- 3 niveles de importancia
-
-## ⚠️ Nota de Seguridad
-
-Esta es una implementación **educativa** y de **investigación**. NO usar en producción.
-
-Para aplicaciones reales, use bibliotecas auditadas:
-- [liboqs](https://github.com/open-quantum-safe/liboqs) (Open Quantum Safe)
-- [PQClean](https://github.com/PQClean/PQClean)
-- Implementaciones oficiales de CRYSTALS
-
-## 📄 Licencia
-
-Proyecto académico para propósitos educativos y de investigación.
-
-## 🤝 Referencias
-
-- [CRYSTALS-Kyber Official](https://pq-crystals.org/kyber/)
-- [NIST Post-Quantum Cryptography](https://csrc.nist.gov/projects/post-quantum-cryptography)
-- [Module-LWE Paper](https://doi.org/10.1007/s10623-014-9938-4)
-
-## 👨‍🎓 Autor
-
-Proyecto de Nivel Doctorado - Implementación Completa de Kyber-512
+**Proyecto de Titulación**  
+Universidad Bancaria de México  
+Ingeniería en Sistemas Computacionales
 
 ---
 
-**Versión**: 2.0.0
-**Build Status**: ✅ Compilación exitosa
-**Bundle Size**: 862.73 kB (200.53 kB gzipped)
+## Descripción
+
+Esta aplicación permite visualizar de manera interactiva y tridimensional el funcionamiento del algoritmo de cifrado CRYSTALS-Kyber-512, un estándar de seguridad diseñado para proteger la información frente a las futuras computadoras cuánticas.
+
+El proyecto tiene un propósito educativo: hacer comprensible un algoritmo matemáticamente complejo mediante representaciones visuales que muestran, paso a paso, cómo se generan las claves de cifrado, cómo se protege un mensaje y cómo se recupera de forma segura.
+
+---
+
+## Contexto
+
+### El problema que resuelve Kyber
+
+Los sistemas de cifrado actuales, como los que protegen las compras en línea, las comunicaciones bancarias y los correos electrónicos, se basan en problemas matemáticos que las computadoras convencionales no pueden resolver en un tiempo razonable.
+
+Sin embargo, las computadoras cuánticas podrán resolver estos problemas con facilidad, lo que dejaría vulnerable gran parte de la información que hoy consideramos segura.
+
+CRYSTALS-Kyber es la respuesta a esta amenaza. El Instituto Nacional de Estándares y Tecnología de Estados Unidos (NIST) lo seleccionó como el nuevo estándar de cifrado resistente a ataques cuánticos, destinado a reemplazar gradualmente los sistemas actuales.
+
+### Por qué es importante
+
+Aunque las computadoras cuánticas capaces de romper el cifrado actual aún no existen a gran escala, la información interceptada hoy podría ser descifrada en el futuro. Por esta razón, gobiernos, empresas tecnológicas y organizaciones de todo el mundo están migrando hacia sistemas como Kyber.
+
+---
+
+## Funciones de la Aplicación
+
+La aplicación ofrece tres operaciones principales que corresponden al ciclo completo del algoritmo:
+
+**Generación de claves**  
+Crea un par de claves: una  y una privada. La visualización muestra las estructuras matemáticas que conforman cada clave.
+
+**Cifrado de información**  
+Demuestra cómo se protege un mensaje utilizando la clave pública del destinatario. El proceso se representa mediante animaciones que ilustran la transformación de los datos.
+
+**Descifrado de información**  
+Muestra cómo el destinatario recupera el mensaje original utilizando su clave privada, completando el ciclo de comunicación segura.
+
+---
+
+## Características Principales
+
+**Visualización tridimensional interactiva**  
+Las estructuras matemáticas del algoritmo se representan como objetos 3D que el usuario puede explorar, rotar y examinar desde diferentes ángulos.
+
+**Panel de análisis en tiempo real**  
+Muestra estadísticas y propiedades de los datos conforme se ejecutan las operaciones, permitiendo observar cómo cambian los valores durante el proceso.
+
+**Explicaciones contextuales**  
+Cada paso del algoritmo incluye descripciones que explican qué está ocurriendo y por qué, facilitando la comprensión sin requerir conocimientos previos de criptografía avanzada.
+
+**Animaciones del flujo de datos**  
+Las operaciones de cifrado y descifrado se representan mediante animaciones que ilustran el recorrido de la información a través del sistema.
+
+---
+
+## Aplicaciones de Kyber en el Mundo Real
+
+CRYSTALS-Kyber ya se utiliza en diversos sistemas y plataformas:
+
+- Navegadores web como Google Chrome y Mozilla Firefox, que protegen las conexiones a sitios web
+- Aplicaciones de mensajería segura como Signal
+- Servicios en la nube de Amazon, Google y Microsoft
+- Sistemas gubernamentales y de defensa en proceso de actualización
+
+Esta aplicación educativa contribuye a la comprensión de una tecnología que será fundamental para la seguridad digital en las próximas décadas.
+
+---
+
+## Destinatarios
+
+Este proyecto está dirigido a:
+
+- Estudiantes de ingeniería, matemáticas o ciencias de la computación interesados en criptografía moderna
+- Profesionales de tecnología que desean comprender los fundamentos de los nuevos estándares de cifrado
+- Cualquier persona interesada en conocer cómo funcionará la seguridad digital del futuro
+
+---
+
+## Documentación Adicional
+
+Para información más detallada, el proyecto incluye documentación complementaria:
+
+- **Guía Técnica**: Instrucciones de instalación y configuración para desarrolladores
+- **Fundamento Matemático**: Formalización de las estructuras algebraicas del algoritmo
+- **Especificación de Visualización**: Detalles sobre las decisiones de diseño visual
+
+---
+
+## Nota Importante
+
+Esta aplicación tiene fines exclusivamente educativos y de demostración. No está diseñada para proteger información real. Para aplicaciones que requieran seguridad efectiva, se recomienda utilizar implementaciones profesionales auditadas.
+
+---
+
+**Universidad Bancaria de México**  
+Proyecto de Titulación - 2026
