@@ -1,6 +1,6 @@
 # Fundamentos Matemáticos de la Visualización CRYSTALS-Kyber
 
-## Documento de Justificación Formal para Presentación Doctoral
+## Documento de Justificación Formal para Presentación
 
 ---
 
@@ -17,7 +17,7 @@ CRYSTALS-Kyber es un mecanismo de encapsulamiento de claves (KEM) seleccionado p
 
 ---
 
-## 2. FUNDAMENTOS ALGEBRAICOS FORMALES
+## 2. FUNDAMENTOS ALGEBRAICOS
 
 ### 2.1 El Anillo Base
 
@@ -45,7 +45,7 @@ La relación $X^n \equiv -1$ induce una estructura cíclica con "torsión". El t
 - El círculo mayor ($S^1$ principal) representa los índices $i \in \{0, \ldots, n-1\}$
 - El círculo menor (radio variable) codifica el valor $a_i \in \mathbb{Z}_q$
 
-La reducción $X^n \equiv -1$ (no $X^n \equiv 1$) se visualiza como una "media vuelta" adicional en la topología del toro, distinguiéndolo de un anillo cíclico simple.
+La reducción $X^n \equiv -1$ (no $X^n \equiv 1$) se visualiza como una adicional en la topología del toro, distinguiéndolo de un anillo cíclico simple.
 
 ### 2.2 Módulos sobre el Anillo
 
@@ -111,7 +111,7 @@ Distinguir $(\mathbf{A}, \mathbf{b} = \mathbf{A}\mathbf{s} + \mathbf{e})$ de $(\
 Los vectores $\mathbf{s}$ y $\mathbf{e}$ se visualizan con esferas de radio reducido (proporcional a $|a_i|/q$), comunicando:
 - **Concentración alrededor del cero**: Refleja $\mathbb{E}[\chi_\eta] = 0$
 - **Contraste con aleatorio**: Elementos uniformes tienen esferas de tamaño variable
-- **Color distintivo**: Rojo (secreto crítico) vs. violeta (ruido perturbador)
+- **Color distintivo**: Rojo (secreto) vs. violeta (ruido)
 
 ---
 
@@ -119,7 +119,7 @@ Los vectores $\mathbf{s}$ y $\mathbf{e}$ se visualizan con esferas de radio redu
 
 ### 4.1 Generación de Claves (KeyGen)
 
-**Algoritmo formal**:
+**Algoritmo**:
 
 ```
 KeyGen():
@@ -235,7 +235,7 @@ El grupo aditivo $\mathbb{Z}_n \times \mathbb{Z}_m$ es topológicamente equivale
 Para $\omega$ raíz $n$-ésima primitiva de la unidad en $\mathbb{Z}_q$:
 $$\hat{a}_i = \text{NTT}(a)_i = \sum_{j=0}^{n-1} a_j \omega^{ij} \pmod{q}$$
 
-**Visualización propuesta** (mejora):
+**Visualización propuesta**:
 - **Dominio temporal**: Toro con coeficientes $a_0, \ldots, a_{n-1}$
 - **Transformación**: Desenrollado + reorganización según patrón de mariposa Cooley-Tukey
 - **Dominio frecuencial**: Arreglo lineal con $\hat{a}_0, \ldots, \hat{a}_{n-1}$
@@ -243,24 +243,3 @@ $$\hat{a}_i = \text{NTT}(a)_i = \sum_{j=0}^{n-1} a_j \omega^{ij} \pmod{q}$$
 La multiplicación puntual en dominio NTT: $\text{NTT}(a \cdot b) = \text{NTT}(a) \odot \text{NTT}(b)$
 
 ---
-
-## 6. OPTIMIZACIONES PROPUESTAS
-
-### 6.1 Mejoras de Fidelidad Matemática
-
-1. **Escala logarítmica para coeficientes**: $r = r_{\min} + \log(1 + |a_i|) \cdot c$
-2. **Visualización de la distribución CBD**: Histograma 3D emergente durante muestreo
-3. **Indicadores de módulo**: Efecto de "wrap-around" visible cuando $a + b \geq q$
-4. **Anotaciones LaTeX**: Fórmulas renderizadas en tiempo real
-
-### 6.2 Mejoras de Comunicación Visual
-
-1. **Trazabilidad de operaciones**: Líneas de flujo persistentes con degradado temporal
-2. **Panel de ecuaciones**: Mostrar la ecuación activa durante cada operación
-3. **Modo "paso a paso"**: Control granular sobre cada operación atómica
-4. **Comparación lado a lado**: Original vs. cifrado vs. recuperado
-
----
-
-*Documento preparado según estándares de rigor doctoral.*
-*Todas las definiciones siguen la especificación FIPS 203 (ML-KEM).*

@@ -9,10 +9,10 @@ import {
   inject,
   PLATFORM_ID,
 } from '@angular/core';
-import { CommonModule, isPlatformBrowser } from '@angular/common';
-import { SceneService } from './services/scene.service';
-import { KyberOrchestrator, KyberState } from './animations/kyber-orchestrator';
-import { LogService } from '../services/log.service';
+import {CommonModule, isPlatformBrowser} from '@angular/common';
+import {SceneService} from './services/scene.service';
+import {KyberOrchestrator, KyberState} from './animations/kyber-orchestrator';
+import {LogService} from '../services/log.service';
 
 /**
  * Componente principal de visualización 3D de CRYSTALS-Kyber.
@@ -87,7 +87,7 @@ import { LogService } from '../services/log.service';
 
         <div class="info-panel">
           <p><strong>Rq = Zq[X]/(X^256+1)</strong>, q=3329</p>
-          <p>Kyber-768 (k=3)</p>
+          <p>Kyber-512 (k=2)</p>
         </div>
       </div>
     </div>
@@ -285,12 +285,29 @@ import { LogService } from '../services/log.service';
       border: 1px solid rgba(255, 255, 255, 0.15);
     }
 
-    .matrix-a { background: #999; }
-    .secret-s { background: #d946ef; }
-    .vector-t { background: #a78bfa; }
-    .error-e { background: #facc15; }
-    .cipher { background: #10b981; }
-    .message { background: #e5e5e5; }
+    .matrix-a {
+      background: #999;
+    }
+
+    .secret-s {
+      background: #d946ef;
+    }
+
+    .vector-t {
+      background: #a78bfa;
+    }
+
+    .error-e {
+      background: #facc15;
+    }
+
+    .cipher {
+      background: #10b981;
+    }
+
+    .message {
+      background: #e5e5e5;
+    }
 
     .info-panel {
       position: absolute;
@@ -306,8 +323,13 @@ import { LogService } from '../services/log.service';
       box-shadow: none;
     }
 
-    .info-panel p { margin: 3px 0; }
-    .info-panel strong { color: #aaa; }
+    .info-panel p {
+      margin: 3px 0;
+    }
+
+    .info-panel strong {
+      color: #aaa;
+    }
   `],
 })
 export class KyberVisualizationComponent implements AfterViewInit, OnDestroy {
@@ -344,7 +366,7 @@ export class KyberVisualizationComponent implements AfterViewInit, OnDestroy {
     const height = window.innerHeight;
 
     this.sceneService.initialize(this.canvasRef, width, height);
-    this.orchestrator = new KyberOrchestrator(this.sceneService.getScene(), 3);
+    this.orchestrator = new KyberOrchestrator(this.sceneService.getScene(), 2);
 
     this.orchestrator.setStateChangeCallback((state) => {
       this.currentState.set(state);

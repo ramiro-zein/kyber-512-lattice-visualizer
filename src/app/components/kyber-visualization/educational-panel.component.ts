@@ -6,7 +6,7 @@
 
 import { Component, Input } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { CryptoOperation } from '../../core/services/kyber-crypto.service';
+import { CryptoOperation } from '../../core/models/kyber.types';
 
 interface EducationalContent {
   title: string;
