@@ -52,9 +52,6 @@ import {LogService} from '../services/log.service';
           <button (click)="runFullDemo()" [disabled]="isRunning()" class="btn-demo">
             Demo Completa
           </button>
-          <button (click)="reset()" class="btn-reset">
-            Reset
-          </button>
         </div>
 
         <div class="legend">
