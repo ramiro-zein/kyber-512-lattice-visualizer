@@ -256,7 +256,7 @@ export class EducationalPanelComponent {
           label: 'Umbral de Decodificación',
           description:
             "Se compara el coeficiente m'[0] con umbrales ⌊q/4⌋ y ⌊3q/4⌋. Si está en [⌊q/4⌋, ⌊3q/4⌋], se decodifica como 1; de lo contrario, como 0.",
-          formula: "m = 1 si m'[0] ∈ [832, 2497], sino 0",
+          formula: "m = 1 si m'[0] ∈ (832, 2496), sino 0",
           importance: 'high',
         },
         {

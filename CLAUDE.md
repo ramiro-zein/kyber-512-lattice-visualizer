@@ -25,7 +25,7 @@ npm run serve:ssr:modelo-cifrado          # Serve SSR build
 ```
 
 ### Package Manager
-This project uses **npm** (not pnpm, despite what README.md says). The `bun.lock` file is present but npm is the primary package manager.
+This project uses **bun** as the primary package manager. Use `bun run <script>` for all commands.
 
 ## Architecture
 
@@ -63,7 +63,8 @@ The application follows strict separation of concerns with three core services:
 - N = 256 (polynomial degree)
 - Q = 3329 (prime modulus)
 - K = 2 (module dimension)
-- η = 2 (CBD parameter)
+- η₁ = 3 (CBD parameter for keygen: sampling s and e)
+- η₂ = 2 (CBD parameter for encryption: sampling r, e₁, e₂)
 - Security: NIST Level 1 (equivalent to AES-128)
 
 ### Core Data Structures
@@ -72,15 +73,18 @@ The application follows strict separation of concerns with three core services:
 - Represents polynomials in the ring R
 - Immutable: all operations return new instances
 - Operations: `add()`, `sub()`, `mul()` (schoolbook O(N²) multiplication)
-- Generators: `Poly.random()` (uniform), `Poly.noise()` (CBD distribution)
+- Generators: `Poly.random()` (uniform), `Poly.noise(eta)` (CBD with explicit η parameter)
 
 **KyberState interface**:
 ```typescript
 {
   A: PolyMatrix,     // Public matrix (K×K)
-  s: PolyVector,     // Secret key (K×1)
+  s: PolyVector,     // Secret key (K×1) — sampled with η₁=3
+  e: PolyVector,     // Keygen error (K×1) — sampled with η₁=3
   t: PolyVector,     // Public key = As + e
-  r: PolyVector,     // Encryption randomness
+  r: PolyVector,     // Encryption randomness — sampled with η₂=2
+  e1: PolyVector,    // Encryption error (K×1) — sampled with η₂=2
+  e2: Poly | null,   // Encryption error scalar — sampled with η₂=2
   u: PolyVector,     // Ciphertext component 1
   v: Poly | null,    // Ciphertext component 2
   msgBit: number     // Message (0 or 1)
@@ -91,19 +95,19 @@ The application follows strict separation of concerns with three core services:
 
 1. **Key Generation** (Algorithm 1):
    - Generate uniform matrix A (K×K polynomials)
-   - Sample secret s, error e using CBD(η=2)
+   - Sample secret s, error e using CBD(η₁=3)
    - Compute public key t = As + e
 
 2. **Encryption** (Algorithm 2):
    - Input: public key (A, t), message bit m
-   - Sample r, e₁, e₂ using CBD
-   - Encode m: 0→0, 1→⌊Q/2⌋
+   - Sample r, e₁, e₂ using CBD(η₂=2)
+   - Encode m: 0→0, 1→round(Q/2)=1665
    - Compute u = Aᵀr + e₁
    - Compute v = tᵀr + e₂ + encode(m)
 
 3. **Decryption** (Algorithm 3):
    - Compute m' = v - sᵀu
-   - Decode: if m'[0] ∈ [⌊Q/4⌋, ⌊3Q/4⌋] → 1, else → 0
+   - Decode: if m'[0] ∈ (⌊Q/4⌋, ⌊3Q/4⌋) = (832, 2496) → 1, else → 0
 
 ## Code Style & Patterns
 
@@ -150,12 +154,14 @@ Each polynomial is rendered as a lattice structure:
 - **Core**: Central cube with pulse animation
 - **Label Sprite**: Text showing polynomial name and first coefficients
 
-**Color Scheme** (semantic):
-- Cyan `0x06b6d4`: Public matrix A
-- Magenta `0xd946ef`: Secret vector s
-- Purple `0x8b5cf6`: Public key t
-- Green `0x10b981`: Ciphertext (u, v)
-- Yellow `0xfacc15`: Message m
+**Color Scheme** (semantic, defined in `src/app/kyber-visualization/entities/colors.ts`):
+- Silver `0xc0c0c0`: Public matrix A
+- Dark Red `0x8b0000`: Secret vector s
+- Gold `0xffd700`: Public key t
+- Dark Violet `0x9400d3`: Error vectors e, e₁, e₂
+- Light Blue `0x00bfff`: Ephemeral r
+- Emerald `0x50c878`: Ciphertext (u, v)
+- White `0xffffff`: Message m
 
 ## Testing
 
@@ -198,7 +204,7 @@ npm test                    # Run all tests with Karma
 
 4. **SSR Issues**: Never access `window`, `document`, or DOM APIs without platform checks. Initialize Three.js only in `afterNextRender()`.
 
-5. **Module-LWE Noise**: CBD must produce small coefficients ({-2,-1,0,1,2} for η=2). Large noise breaks security and causes decryption failures.
+5. **Module-LWE Noise**: CBD must produce small coefficients ({-3,…,3} for η₁=3 in keygen; {-2,…,2} for η₂=2 in encaps). Large noise breaks security and causes decryption failures.
 
 ## Angular Configuration
 

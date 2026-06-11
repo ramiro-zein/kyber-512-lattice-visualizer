@@ -96,6 +96,7 @@ export class VectorPolynomial extends THREE.Group {
   }
 
   private createLabel(): void {
+    if (typeof document === 'undefined') return;
     const canvas = document.createElement('canvas');
     const context = canvas.getContext('2d')!;
     canvas.width = 256;

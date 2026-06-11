@@ -13,10 +13,14 @@ import {CommonModule, isPlatformBrowser} from '@angular/common';
 import {SceneService} from './services/scene.service';
 import {KyberOrchestrator, KyberState} from './animations/kyber-orchestrator';
 import {LogService} from '../services/log.service';
+import {KyberCryptoService} from '../core/services/kyber-crypto.service';
 
 /**
  * Componente principal de visualización 3D de CRYSTALS-Kyber.
  * Renderiza la escena Three.js y proporciona controles de interacción.
+ * La visualización está conectada al KyberCryptoService: después de cada
+ * fase animada, los coeficientes visuales se sincronizan con los valores
+ * criptográficos reales calculados por el servicio.
  */
 @Component({
   selector: 'app-kyber-visualization',
@@ -84,7 +88,7 @@ import {LogService} from '../services/log.service';
 
         <div class="info-panel">
           <p><strong>Rq = Zq[X]/(X^256+1)</strong>, q=3329</p>
-          <p>Kyber-512 (k=2)</p>
+          <p>Kyber-512 (k=2, η₁=3, η₂=2)</p>
         </div>
       </div>
     </div>
@@ -282,29 +286,13 @@ import {LogService} from '../services/log.service';
       border: 1px solid rgba(255, 255, 255, 0.15);
     }
 
-    .matrix-a {
-      background: #999;
-    }
-
-    .secret-s {
-      background: #d946ef;
-    }
-
-    .vector-t {
-      background: #a78bfa;
-    }
-
-    .error-e {
-      background: #facc15;
-    }
-
-    .cipher {
-      background: #10b981;
-    }
-
-    .message {
-      background: #e5e5e5;
-    }
+    /* Colors match KYBER_COLORS in colors.ts exactly */
+    .matrix-a  { background: #c0c0c0; }
+    .secret-s  { background: #8b0000; }
+    .vector-t  { background: #ffd700; }
+    .error-e   { background: #9400d3; }
+    .cipher    { background: #50c878; }
+    .message   { background: #ffffff; }
 
     .info-panel {
       position: absolute;
@@ -335,6 +323,7 @@ export class KyberVisualizationComponent implements AfterViewInit, OnDestroy {
   private sceneService = inject(SceneService);
   private platformId = inject(PLATFORM_ID);
   private logService = inject(LogService);
+  private cryptoService = inject(KyberCryptoService);
   private orchestrator!: KyberOrchestrator;
   private isBrowser = false;
   private lastLoggedSubPhase = '';
@@ -368,14 +357,11 @@ export class KyberVisualizationComponent implements AfterViewInit, OnDestroy {
     this.orchestrator.setStateChangeCallback((state) => {
       this.currentState.set(state);
 
-      // Log state changes to activity log
       if (state.subPhase !== this.lastLoggedSubPhase) {
         this.lastLoggedSubPhase = state.subPhase;
 
         if (state.progress === 1) {
           this.logService.success(state.subPhase);
-        } else if (state.progress === 0 && state.phase !== 'idle') {
-          this.logService.info(state.subPhase);
         } else if (state.phase !== 'idle') {
           this.logService.info(state.subPhase);
         }
@@ -404,9 +390,20 @@ export class KyberVisualizationComponent implements AfterViewInit, OnDestroy {
   async runKeyGen(): Promise<void> {
     this.isRunning.set(true);
     try {
-      await this.orchestrator.runKeyGen();
+      await Promise.all([
+        this.orchestrator.runKeyGen(),
+        this.cryptoService.generateKeys(),
+      ]);
+      const state = this.cryptoService.currentState;
+      this.orchestrator.syncKeyGenCoefficients(
+        state.A.map(row => row.map(p => p.coeffs)),
+        state.s.map(p => p.coeffs),
+        state.t.map(p => p.coeffs)
+      );
     } catch (e) {
-      // Animation was aborted, ignore
+      if (!(e instanceof Error && e.message === 'Animation aborted')) {
+        console.error('KeyGen error:', e);
+      }
     } finally {
       this.isRunning.set(false);
     }
@@ -415,9 +412,20 @@ export class KyberVisualizationComponent implements AfterViewInit, OnDestroy {
   async runEncaps(): Promise<void> {
     this.isRunning.set(true);
     try {
-      await this.orchestrator.runEncaps();
+      const msgBit = Math.round(Math.random()) as 0 | 1;
+      await Promise.all([
+        this.orchestrator.runEncaps(),
+        this.cryptoService.encrypt(msgBit),
+      ]);
+      const state = this.cryptoService.currentState;
+      this.orchestrator.syncEncapsCoefficients(
+        state.u.map(p => p.coeffs),
+        state.v?.coeffs ?? []
+      );
     } catch (e) {
-      // Animation was aborted, ignore
+      if (!(e instanceof Error && e.message === 'Animation aborted')) {
+        console.error('Encaps error:', e);
+      }
     } finally {
       this.isRunning.set(false);
     }
@@ -426,9 +434,14 @@ export class KyberVisualizationComponent implements AfterViewInit, OnDestroy {
   async runDecaps(): Promise<void> {
     this.isRunning.set(true);
     try {
-      await this.orchestrator.runDecaps();
+      await Promise.all([
+        this.orchestrator.runDecaps(),
+        this.cryptoService.decrypt(),
+      ]);
     } catch (e) {
-      // Animation was aborted, ignore
+      if (!(e instanceof Error && e.message === 'Animation aborted')) {
+        console.error('Decaps error:', e);
+      }
     } finally {
       this.isRunning.set(false);
     }
@@ -437,9 +450,39 @@ export class KyberVisualizationComponent implements AfterViewInit, OnDestroy {
   async runFullDemo(): Promise<void> {
     this.isRunning.set(true);
     try {
-      await this.orchestrator.runFullDemo();
+      // KeyGen phase
+      await this.orchestrator.runKeyGen();
+      await this.cryptoService.generateKeys();
+      const keyState = this.cryptoService.currentState;
+      this.orchestrator.syncKeyGenCoefficients(
+        keyState.A.map(row => row.map(p => p.coeffs)),
+        keyState.s.map(p => p.coeffs),
+        keyState.t.map(p => p.coeffs)
+      );
+      this.hasKeys.set(true);
+
+      await new Promise<void>(r => setTimeout(r, 1000));
+
+      // Encaps phase
+      const msgBit = Math.round(Math.random()) as 0 | 1;
+      await this.orchestrator.runEncaps();
+      await this.cryptoService.encrypt(msgBit);
+      const encState = this.cryptoService.currentState;
+      this.orchestrator.syncEncapsCoefficients(
+        encState.u.map(p => p.coeffs),
+        encState.v?.coeffs ?? []
+      );
+      this.hasCipher.set(true);
+
+      await new Promise<void>(r => setTimeout(r, 1000));
+
+      // Decaps phase
+      await this.orchestrator.runDecaps();
+      await this.cryptoService.decrypt();
     } catch (e) {
-      // Animation was aborted, ignore
+      if (!(e instanceof Error && e.message === 'Animation aborted')) {
+        console.error('Full demo error:', e);
+      }
     } finally {
       this.isRunning.set(false);
     }
@@ -448,6 +491,7 @@ export class KyberVisualizationComponent implements AfterViewInit, OnDestroy {
   reset(): void {
     if (!this.isBrowser || !this.orchestrator) return;
     this.orchestrator.reset();
+    this.cryptoService.reset();
     this.isRunning.set(false);
     this.hasKeys.set(false);
     this.hasCipher.set(false);
