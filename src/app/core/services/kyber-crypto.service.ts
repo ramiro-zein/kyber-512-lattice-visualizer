@@ -28,11 +28,11 @@ export interface CryptoEvent {
   /** Timestamp */
   timestamp: Date;
   /** Optional data payload */
-  data?: any;
+  data?: Record<string, unknown>;
 }
 
 /**
- * Service managing Kyber-512¶ cryptographic operations
+ * Service managing Kyber-512 cryptographic operations
  * Implements the full Kyber Key Encapsulation Mechanism
  */
 @Injectable({
@@ -136,24 +136,24 @@ export class KyberCryptoService {
       data: { matrixSize: K * K },
     });
 
-    // Step 2: Generate secret vector s (small noise via CBD)
+    // Step 2: Generate secret vector s — uses η₁=3 per Kyber-512 spec
     const s: PolyVector = Array(K)
       .fill(null)
-      .map(() => Poly.noise());
+      .map(() => Poly.noise(KYBER_512_PARAMS.ETA1));
 
     this.logEvent({
       operation: CryptoOperation.KEY_GENERATION,
       step: 'secret_s',
-      message: `Vector secreto s generado usando CBD con η=${KYBER_512_PARAMS.ETA}`,
+      message: `Vector secreto s generado usando CBD con η₁=${KYBER_512_PARAMS.ETA1}`,
       type: 'info',
       timestamp: new Date(),
       data: { vectorStats: s.map(computePolyStatistics) },
     });
 
-    // Step 3: Generate error vector e (small noise via CBD)
+    // Step 3: Generate error vector e — uses η₁=3 per Kyber-512 spec
     const e: PolyVector = Array(K)
       .fill(null)
-      .map(() => Poly.noise());
+      .map(() => Poly.noise(KYBER_512_PARAMS.ETA1));
 
     // Step 4: Compute public key t = As + e
     // Matrix-vector multiplication in polynomial ring
@@ -224,33 +224,33 @@ export class KyberCryptoService {
       timestamp: new Date(),
     });
 
-    // Step 1: Generate random vector r (noise via CBD)
+    // Step 1: Generate random vector r — uses η₂=2 per Kyber-512 spec
     const r: PolyVector = Array(K)
       .fill(null)
-      .map(() => Poly.noise());
+      .map(() => Poly.noise(KYBER_512_PARAMS.ETA2));
 
-    // Step 2: Generate error vectors e1, e2
+    // Step 2: Generate error vectors e1, e2 — uses η₂=2 per Kyber-512 spec
     const e1: PolyVector = Array(K)
       .fill(null)
-      .map(() => Poly.noise());
-    const e2: Poly = Poly.noise();
+      .map(() => Poly.noise(KYBER_512_PARAMS.ETA2));
+    const e2: Poly = Poly.noise(KYBER_512_PARAMS.ETA2);
 
     this.logEvent({
       operation: CryptoOperation.ENCRYPTION,
       step: 'randomness',
-      message: `Vectores aleatorios r, e1, e2 generados con CBD(η=${KYBER_512_PARAMS.ETA})`,
+      message: `Vectores aleatorios r, e1, e2 generados con CBD(η₂=${KYBER_512_PARAMS.ETA2})`,
       type: 'info',
       timestamp: new Date(),
     });
 
-    // Step 3: Encode message bit
-    const encodedVal = bit === 1 ? Math.floor(Q / 2) : 0;
+    // Step 3: Encode message bit — Decompress₁(b) = round(q/2)·b per FIPS 203
+    const encodedVal = bit === 1 ? Math.round(Q / 2) : 0;
     const msgPoly = new Poly([encodedVal, ...new Array(N - 1).fill(0)]);
 
     this.logEvent({
       operation: CryptoOperation.ENCRYPTION,
       step: 'encode',
-      message: `Mensaje codificado: m=${bit} → m'[0]=${encodedVal} (⌊q/2⌋=${Math.floor(Q / 2)})`,
+      message: `Mensaje codificado: m=${bit} → m'[0]=${encodedVal} (⌊q/2⌋≈${Math.round(Q / 2)})`,
       type: 'info',
       timestamp: new Date(),
     });

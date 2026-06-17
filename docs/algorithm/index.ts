@@ -272,7 +272,7 @@ const argv = yargs(hideBin(process.argv))
       },
       size: {
         choices: [128, 192, 256] as const,
-        description: "The size of the passphrase",
+        description: "AES key size (bits) used to encrypt the private key file",
         default: 128,
       },
       passphrase: {
@@ -362,8 +362,8 @@ const argv = yargs(hideBin(process.argv))
         demandOption: true,
       },
       signatureEncoding: {
-        ...input,
         alias: "se",
+        type: "string" as const,
         description: "The signature encoding",
         default: "hex",
       },

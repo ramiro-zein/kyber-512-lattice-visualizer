@@ -48,7 +48,14 @@ export class KyberOrchestrator {
   private currentPhase: KyberPhase = 'idle';
   private k = 2;
   private onStateChange?: (state: KyberState) => void;
-  private isAborted = false;
+
+  /**
+   * Monotonically-increasing counter used as an abort token.
+   * Any in-flight animation captures its generation at start time;
+   * when the counter is incremented (on reset), captured delays and RAF
+   * loops detect the mismatch and bail out cleanly.
+   */
+  private abortGeneration = 0;
 
   constructor(scene: THREE.Scene, k = 2) {
     this.scene = scene;
@@ -280,8 +287,7 @@ export class KyberOrchestrator {
   }
 
   reset(): void {
-    // Abort any running animations
-    this.isAborted = true;
+    this.abortGeneration++;
 
     const entitiesToRemove = [
       this.matrixA, this.secretS, this.errorE, this.vectorT,
@@ -291,7 +297,6 @@ export class KyberOrchestrator {
 
     entitiesToRemove.forEach((entity) => {
       if (entity) {
-        // Dispose of Three.js resources
         entity.traverse((child) => {
           if (child instanceof THREE.Mesh) {
             child.geometry?.dispose();
@@ -312,7 +317,6 @@ export class KyberOrchestrator {
       }
     });
 
-    // Also clean up any stray lines (rays from matrix operations)
     const linesToRemove: THREE.Object3D[] = [];
     this.scene.traverse((child) => {
       if (child instanceof THREE.Line && child.parent === this.scene) {
@@ -345,11 +349,6 @@ export class KyberOrchestrator {
 
     this.currentPhase = 'idle';
     this.emitState('Listo para iniciar', 0);
-
-    // Reset abort flag after a short delay to allow pending promises to reject
-    setTimeout(() => {
-      this.isAborted = false;
-    }, 100);
   }
 
   update(delta: number, elapsed: number): void {
@@ -359,33 +358,48 @@ export class KyberOrchestrator {
     this.sharedKeyReceiver?.update(delta, elapsed);
   }
 
+  /**
+   * Syncs visual entities with actual Kyber keygen values.
+   * Called after the crypto service computes real coefficients.
+   */
+  syncKeyGenCoefficients(A: number[][][], s: number[][], t: number[][]): void {
+    if (this.matrixA) {
+      for (let i = 0; i < A.length; i++) {
+        for (let j = 0; j < (A[i]?.length ?? 0); j++) {
+          this.matrixA.getTorus(i, j)?.setCoefficients(A[i][j]);
+        }
+      }
+    }
+    if (this.secretS) this.secretS.setCoefficients(s);
+    if (this.vectorT) this.vectorT.setCoefficients(t);
+  }
+
+  /**
+   * Syncs visual ciphertext entities with actual Kyber encaps values.
+   * Called after the crypto service encrypts a real message bit.
+   */
+  syncEncapsCoefficients(u: number[][], v: number[]): void {
+    if (this.vectorU) this.vectorU.setCoefficients(u);
+    if (this.torusV) this.torusV.setCoefficients(v);
+  }
+
   private delay(ms: number): Promise<void> {
+    const gen = this.abortGeneration;
     return new Promise((resolve, reject) => {
-      const timeoutId = setTimeout(() => {
-        if (this.isAborted) {
+      setTimeout(() => {
+        if (gen !== this.abortGeneration) {
           reject(new Error('Animation aborted'));
         } else {
           resolve();
         }
       }, ms);
-
-      // Store timeout for potential cleanup
-      if (this.isAborted) {
-        clearTimeout(timeoutId);
-        reject(new Error('Animation aborted'));
-      }
     });
-  }
-
-  private checkAbort(): void {
-    if (this.isAborted) {
-      throw new Error('Animation aborted');
-    }
   }
 
   /** Visualiza el producto matriz-vector A·s con rayos */
   private async animateMatrixVectorProduct(): Promise<void> {
     if (!this.matrixA || !this.secretS) return;
+    const gen = this.abortGeneration;
 
     const rays: THREE.Line[] = [];
     const rayMaterial = new THREE.LineBasicMaterial({
@@ -404,8 +418,7 @@ export class KyberOrchestrator {
         row[j].getWorldPosition(startPos);
         sTori[j].getWorldPosition(endPos);
 
-        const points = [startPos, endPos];
-        const geometry = new THREE.BufferGeometry().setFromPoints(points);
+        const geometry = new THREE.BufferGeometry().setFromPoints([startPos, endPos]);
         const ray = new THREE.Line(geometry, rayMaterial.clone());
         rays.push(ray);
         this.scene.add(ray);
@@ -423,6 +436,14 @@ export class KyberOrchestrator {
         const duration = 500;
 
         const animate = () => {
+          if (gen !== this.abortGeneration) {
+            ray.geometry.dispose();
+            (ray.material as THREE.Material).dispose();
+            this.scene.remove(ray);
+            resolve();
+            return;
+          }
+
           const elapsed = Date.now() - startTime;
           const progress = Math.min(elapsed / duration, 1);
           material.opacity = startOpacity * (1 - progress);
@@ -430,6 +451,8 @@ export class KyberOrchestrator {
           if (progress < 1) {
             requestAnimationFrame(animate);
           } else {
+            ray.geometry.dispose();
+            (ray.material as THREE.Material).dispose();
             this.scene.remove(ray);
             resolve();
           }
@@ -450,6 +473,7 @@ export class KyberOrchestrator {
   }
 
   private async animateVerification(success: boolean): Promise<void> {
+    const gen = this.abortGeneration;
     const color = success ? KYBER_COLORS.SUCCESS : KYBER_COLORS.FAILURE;
 
     const geometry = new THREE.SphereGeometry(5, 32, 32);
@@ -468,6 +492,14 @@ export class KyberOrchestrator {
       const duration = 800;
 
       const animate = () => {
+        if (gen !== this.abortGeneration) {
+          geometry.dispose();
+          material.dispose();
+          this.scene.remove(verificationSphere);
+          resolve();
+          return;
+        }
+
         const elapsed = Date.now() - startTime;
         const progress = Math.min(elapsed / duration, 1);
 
@@ -485,22 +517,40 @@ export class KyberOrchestrator {
 
     await this.delay(1000);
     await this.fadeOutEntity(verificationSphere, 500);
+    geometry.dispose();
+    material.dispose();
     this.scene.remove(verificationSphere);
   }
 
   private async fadeOutEntity(entity: THREE.Object3D, duration: number): Promise<void> {
+    const gen = this.abortGeneration;
+
+    entity.traverse((child) => {
+      if (child instanceof THREE.Mesh) {
+        const mat = child.material as THREE.Material;
+        if ('opacity' in mat) {
+          (mat as { transparent: boolean }).transparent = true;
+        }
+      }
+    });
+
     return new Promise((resolve) => {
       const startTime = Date.now();
 
       const animate = () => {
+        if (gen !== this.abortGeneration) {
+          resolve();
+          return;
+        }
+
         const elapsed = Date.now() - startTime;
         const progress = Math.min(elapsed / duration, 1);
 
         entity.traverse((child) => {
           if (child instanceof THREE.Mesh) {
-            const material = child.material as THREE.Material;
-            if ('opacity' in material) {
-              (material as THREE.MeshBasicMaterial).opacity = 1 - progress;
+            const mat = child.material as THREE.Material;
+            if ('opacity' in mat) {
+              (mat as THREE.MeshBasicMaterial).opacity = 1 - progress;
             }
           }
         });
@@ -520,11 +570,17 @@ export class KyberOrchestrator {
     target: THREE.Vector3,
     duration: number
   ): Promise<void> {
+    const gen = this.abortGeneration;
     return new Promise((resolve) => {
       const startPosition = torus.position.clone();
       const startTime = Date.now();
 
       const animate = () => {
+        if (gen !== this.abortGeneration) {
+          resolve();
+          return;
+        }
+
         const elapsed = Date.now() - startTime;
         const progress = Math.min(elapsed / duration, 1);
         const eased = 1 - Math.pow(1 - progress, 3);

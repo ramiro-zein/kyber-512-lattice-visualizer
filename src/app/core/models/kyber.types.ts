@@ -9,8 +9,10 @@ export const KYBER_512_PARAMS = {
   Q: 3329,
   /** Module dimension (lattice rank) */
   K: 2,
-  /** Centered Binomial Distribution parameter for noise sampling */
-  ETA: 2,
+  /** CBD parameter for key generation (s, e): η₁ = 3 per CRYSTALS-Kyber spec */
+  ETA1: 3,
+  /** CBD parameter for encryption (r, e1, e2): η₂ = 2 per CRYSTALS-Kyber spec */
+  ETA2: 2,
   /** Security level in bits */
   SECURITY_LEVEL: 128,
 } as const;
@@ -101,14 +103,14 @@ export class Poly {
 
   /**
    * Generate noise polynomial using Centered Binomial Distribution
-   * CBD ensures proper error distribution for security proofs
-   * @returns Noise polynomial
+   * @param eta - CBD parameter (use ETA1=3 for keygen, ETA2=2 for encryption)
+   * @returns Noise polynomial with coefficients in Z_q
    */
-  static noise(): Poly {
+  static noise(eta: number = KYBER_512_PARAMS.ETA2): Poly {
     return new Poly(
       Array(KYBER_512_PARAMS.N)
         .fill(0)
-        .map(() => mod(cbd(), KYBER_512_PARAMS.Q))
+        .map(() => mod(cbd(eta), KYBER_512_PARAMS.Q))
     );
   }
 
@@ -208,15 +210,15 @@ export function randInt(max: number): number {
 
 /**
  * Centered Binomial Distribution sampler
- * Samples from {-ETA, ..., ETA} with binomial distribution
- * @returns Sample from CBD
+ * Samples from {-eta, ..., eta} with binomial distribution
+ * @param eta - Distribution parameter (ETA1=3 for keygen, ETA2=2 for encryption)
+ * @returns Sample from CBD_eta
  */
-export function cbd(): number {
-  const {ETA} = KYBER_512_PARAMS;
+export function cbd(eta: number = KYBER_512_PARAMS.ETA2): number {
   let a = 0;
   let b = 0;
 
-  for (let i = 0; i < ETA; i++) {
+  for (let i = 0; i < eta; i++) {
     a += randInt(2);
     b += randInt(2);
   }
