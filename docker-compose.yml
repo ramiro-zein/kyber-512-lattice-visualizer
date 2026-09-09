@@ -1,0 +1,7 @@
+services:
+  angular:
+    build:
+      context: .
+    restart: unless-stopped
+    ports:
+      - "${PORT}:80"
